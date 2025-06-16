@@ -32,7 +32,6 @@
             justify-content: center;
             min-height: 100vh;
             overflow: auto;
-            user-select: none;
         }
 
         h1, p {
@@ -192,6 +191,16 @@
         }
 
         /* --- Équation Interactive --- */
+        .equation-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center; /* Center content like text-representation if it's narrower */
+            padding: 20px;
+            background: var(--color-box-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--color-shadow);
+        }
         .equation {
             display: flex;
             align-items: center;
@@ -199,10 +208,9 @@
             flex-wrap: wrap;
             font-size: 2.5em;
             font-weight: bold;
-            padding: 20px;
-            background: var(--color-box-bg);
-            border-radius: 12px;
-            box-shadow: 0 4px 12px var(--color-shadow);
+            /* Styles moved to .equation-wrapper:
+               padding, background, border-radius, box-shadow
+            */
         }
 
         .equation .part {
@@ -269,6 +277,7 @@
             text-align: center;
             margin-top: 15px; /* Space above this text */
             font-size: 1.2em; /* Smaller than the main equation */
+            word-spacing: 10px;
         }
         .equation-text-representation .divisor-text { color: var(--color-divisor); }
         .equation-text-representation .quotient-text { color: var(--color-quotient); }
@@ -282,9 +291,10 @@
     <h1>Révisions de la Division Euclidienne</h1>
     <p>
         Cette page montre une division euclidienne.<br>
-        La division du <span class="dividend"><b>dividende</b></span> par le <span class="divisor"><b>diviseur</b></span> donne le <span class="quotient"><b>quotient</b></span> et le <span class="remainder"><b>reste</b></span>.<br><br>
-        Le <span class="dividend">dividende</span>, c'est <span class="dividend">le nombre de carrés</span>. Le <span class="divisor">diviseur</span>, c'est <span class="divisor">le contenant d'une boîte</span>. Le <span class="quotient">quotient</span>, c'est le nombre de <span class="quotient">boîtes complètes</span>. Le <span class="remainder">reste</span>, c'est les <span class="remainder">carrés restant</span>, qui ne sont pas dans une boîte complète.<br><br><br>
-        Vous pouvez ici modifier le <span class="dividend">dividende</span> ou le <span class="divisor">diviseur</span> pour comprendre la division euclidienne autrement.
+        Rappel : pas de nombres décimaux avec la division euclidienne.<br>Seulement des nombres entiers naturels.<br><br>
+        Le <span class="dividend"><b>dividende</b></span> est égal au <span class="divisor"><b>diviseur</b></span> multiplié par le <span class="quotient"><b>quotient</b></span>, plus le <span class="remainder"><b>reste</b></span>.<br><br><br>
+        Ici, le <span class="dividend">dividende</span>, c'est <span class="dividend">le nombre de carrés</span>. Le <span class="divisor">diviseur</span>, c'est <span class="divisor">le contenant d'une boîte</span>. Le <span class="quotient">quotient</span>, c'est le nombre de <span class="quotient">boîtes complètes</span>. Le <span class="remainder">reste</span>, c'est les <span class="remainder">carrés restant</span>, qui ne sont pas dans une boîte complète.<br><br>
+        Vous pouvez modifier le <span class="dividend">dividende</span> ou le <span class="divisor">diviseur</span> pour comprendre la division euclidienne autrement.
     </p>
 
     <div class="visualization-container">
@@ -326,50 +336,51 @@
         </div>
     </div>
 
-    <div class="equation">
-        <div class="part divisor">
-             <div class="number-control" id="eq-divisor-control">
-                 <span class="number-value" contenteditable="true" id="eq-divisor-value">1</span>
-                 <div class="buttons">
-                    <button class="btn" data-action="inc">▲</button>
-                    <button class="btn" data-action="dec">▼</button>
+    <div class="equation-wrapper">
+        <div class="equation">
+            <div class="part dividend">
+                <div class="number-control dividend" id="eq-dividend-control">
+                    <span class="number-value" contenteditable="true" id="eq-dividend-value">6</span>
+                    <div class="buttons">
+                        <button class="btn" data-action="inc">▲</button>
+                        <button class="btn" data-action="dec">▼</button>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <span class="symbol">x</span>
-        
-        <div class="part quotient">
-            <span id="quotient-value">3</span>
-        </div>
-        
-        <span class="symbol">+</span>
-        
-        <div class="part remainder">
-            <span id="remainder-value">2</span>
-        </div>
 
-        <span class="symbol">=</span>
-        
-        <div class="part dividend">
-            <div class="number-control" id="eq-dividend-control">
-                 <span class="number-value" contenteditable="true" id="eq-dividend-value">6</span>
-                 <div class="buttons">
-                    <button class="btn" data-action="inc">▲</button>
-                    <button class="btn" data-action="dec">▼</button>
+            <span class="symbol">=</span>
+
+            <div class="part divisor">
+                <div class="number-control divisor" id="eq-divisor-control">
+                    <span class="number-value" contenteditable="true" id="eq-divisor-value">1</span>
+                    <div class="buttons">
+                        <button class="btn" data-action="inc">▲</button>
+                        <button class="btn" data-action="dec">▼</button>
+                    </div>
                 </div>
             </div>
+            
+            <span class="symbol">x</span>
+            
+            <div class="part quotient">
+                <span id="quotient-value">3</span>
+            </div>
+            
+            <span class="symbol">+</span>
+            
+            <div class="part remainder">
+                <span id="remainder-value">2</span>
+            </div>
         </div>
-    </div>
-
-    <div class="equation-text-representation">
-        <span class="divisor-text">diviseur</span>
-        <span class="symbol-text">x</span>
-        <span class="quotient-text">quotient</span>
-        <span class="symbol-text">+</span>
-        <span class="remainder-text">reste</span>
-        <span class="symbol-text">=</span>
-        <span class="dividend-text">dividende</span>
+        <div class="equation-text-representation">
+            <span class="dividend-text">dividende</span>
+            <span class="symbol-text">=</span>
+            <span class="divisor-text">diviseur</span>
+            <span class="symbol-text">x</span>
+            <span class="quotient-text">quotient</span>
+            <span class="symbol-text">+</span>
+            <span class="remainder-text">reste</span>
+        </div>
     </div>
 
     <script>
@@ -629,11 +640,10 @@
 
             function handleValueChange(target, newValue) {
                 const value = parseInt(newValue, 10);
-                const isDividend = target.classList.contains('dividend');
 
-                if (isDividend) {
+                if (target.classList.contains('dividend')) {
                     state.dividend = isNaN(value) ? state.dividend : value;
-                } else {
+                } else if (target.classList.contains('divisor')) {
                     state.divisor = isNaN(value) ? state.divisor : value;
                 }
                 updateAndRenderAll();
@@ -675,7 +685,7 @@
             document.addEventListener('mouseup', () => {
                 if(isDragging) {
                     isDragging = false;
-                    document.body.style.cursor = 'default';
+                    document.body.style.cursor = 'unset';
                 }
             });
             
