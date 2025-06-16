@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Division Euclidienne Interactive</title>
+    <style>
+        /* --- Variables de Couleur --- */
+        :root {
+            --color-bg: #f0f2f5;
+            --color-text: #333;
+            --color-box-bg: #ffffff;
+            --color-box-border: #ffc107;
+            --color-dividend: #007bff;
+            --color-divisor: #dc3545;
+            --color-quotient: #28a745;
+            --color-remainder: #ffc107;
+            --color-square: #007bff;
+            --color-shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- Styles Généraux --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: auto;
+            user-select: none;
+        }
+
+        h1, p {
+            text-align: center;
+            max-width: 800px;
+        }
+
+        h1 {
+            color: var(--color-text);
+        }
+
+        p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        /* --- Zone de Visualisation --- */
+        .visualization-container {
+            width: 100%;
+            height: 45vh; /* Fixed height */
+            position: relative; /* For potential absolute positioned children if needed */
+            display: flex;
+            flex-direction: column; /* Stack children vertically */
+            align-items: center; /* Center children horizontally */
+            justify-content: center; /* Center content vertically if space allows, or adjust as needed */
+            margin-top: 40px;
+            margin-bottom: 40px;
+        }
+.horizontal-elements-group {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-end; /* Align items to the bottom */
+            justify-content: center; /* Center the group horizontally */
+            width: 100%; /* Take full width to center its content */
+        }
+
+        /* .dividend-indicator styles removed as it's no longer a separate styled block */
+
+        .dividend-indicator .icon { /* This rule might be obsolete if .icon is no longer used */
+            color: var(--color-dividend);
+            font-size: 1.5em;
+            margin-right: 8px;
+        }
+
+        /* --- Boîte de visualisation --- */
+        .visualization-box {
+            /* Styles like background, border, padding, shadow, radius are moved to .row */
+            display: flex;
+            flex-direction: row; /* Organiser les colonnes de gauche à droite */
+            align-items: flex-end; /* Aligner les colonnes par leur base */
+            /* min-height and min-width removed, will size by content */
+            /* Add a small gap for the horizontal ruler if needed, or adjust ruler positioning */
+        }
+
+        .row { /* This is now a column visually, styled as a box */
+            display: flex;
+            flex-direction: column-reverse; /* Empiler les carrés de bas en haut dans une colonne */
+            
+            background-color: var(--color-box-bg);
+            border: 5px solid var(--color-box-border);
+            padding: 3px;
+            box-shadow: 0 4px 12px var(--color-shadow);
+            border-radius: 8px;
+            min-height: 30px; /* Ensure even empty columns have some presence */
+            margin-right: 2px; /* Space between column-boxes */
+        }
+        .row:last-child {
+            margin-right: 0; /* No margin for the last column */
+        }
+
+        .square {
+            background-color: var(--color-square);
+            opacity: 0.8;
+            border-radius: 3px;
+            margin: 8px 0px;
+        }
+        
+        /* --- Box and Ruler --- */
+        /* .box-and-ruler-container styles removed as the element is no longer used */
+        
+        /* Vertical ruler styles restored */
+        .graduated-line-parent {
+            position: relative; /* For positioning ticks and the line element */
+            top: 10px; /* Décaler la règle vers le bas */
+            margin-left: 10px; /* Space between visualization box and parent */
+            width: 20px; /* Width to contain centered ticks (e.g., 15px tick + spacing) */
+            padding-bottom: 8px;
+            box-sizing: content-box; /* Height set by JS applies to content area */
+        }
+        
+        .graduated-line-element {
+            position: absolute;
+            width: 5px;
+            background-color: var(--color-divisor); /* Red color for divisor ruler */
+            left: 50%;
+            transform: translateX(-50%);
+            /* bottom and height set by JS */
+        }
+        
+        .tick-mark {
+            position: absolute;
+            width: 17px;
+            height: 4px;
+            background-color: var(--color-divisor); /* Red color for divisor ticks */
+            left: 50%;
+            transform: translateX(-50%);
+            /* bottom position set by JS, relative to graduated-line-parent's content area */
+        }
+
+        /* .quotient-text-indicator styles removed as it's now a span within combined-indicator-sentence */
+
+        .quotient-value-highlight {
+            color: var(--color-quotient);
+            font-weight: bold;
+        }
+        
+        /* .divisor-indicator styles removed as it's no longer a separate styled block */
+        
+        .combined-indicator-sentence {
+            display: flex;
+            align-items: baseline; /* Align text elements along their baseline */
+            justify-content: center;
+            font-size: 1.5em;
+            white-space: nowrap;
+            margin-top: 10px; /* Retain some top margin */
+            color: #555; /* Default text color for the sentence parts */
+        }
+
+        .combined-indicator-sentence .number-control {
+            margin: 0 5px; /* Space around number controls within the sentence */
+        }
+        .combined-indicator-sentence > span,
+        .combined-indicator-sentence > div { /* Direct children that are not number controls */
+            margin: 0 3px; /* Small spacing for text parts */
+        }
+        
+        .full-column-highlight {
+            border-color: var(--color-quotient) !important; /* Green border for full columns */
+        }
+
+        /* Horizontal ruler CSS removed */
+
+        /* .visualization-right-panel styles removed as the element is no longer used */
+
+        .remainder-text-highlight { /* For the word "restent" */
+            color: var(--color-remainder);
+        }
+
+        .quotient-text-boites { /* For the word "boîtes" */
+            color: var(--color-quotient);
+            font-weight: bold; /* To match other highlighted parts like quotient number */
+        }
+
+        .remainder-value-highlight { /* For the remainder number */
+            color: var(--color-remainder);
+            font-weight: bold;
+        }
+
+        /* --- Équation Interactive --- */
+        .equation {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            font-size: 2.5em;
+            font-weight: bold;
+            padding: 20px;
+            background: var(--color-box-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--color-shadow);
+        }
+
+        .equation .part {
+            display: flex;
+            align-items: center;
+            margin: 0 15px;
+        }
+
+        .equation .symbol {
+            margin: 0 15px;
+            color: #444;
+        }
+        
+        /* --- Contrôles de Nombre --- */
+        .number-control {
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding: 5px;
+            border-radius: 8px;
+            cursor: ns-resize;
+            transition: background-color 0.2s;
+        }
+        .number-control:hover {
+            background-color: #e9ecef;
+        }
+        
+        .number-value {
+            outline: none;
+            min-width: 1.5em;
+            text-align: center;
+            padding: 0 5px;
+        }
+
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-left: 8px;
+        }
+
+        .btn {
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.6em;
+            color: #aaa;
+            padding: 0 4px;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+        .btn:hover {
+            color: #333;
+        }
+
+        /* --- Application des couleurs spécifiques --- */
+        .dividend { color: var(--color-dividend); font-weight: bold;}
+        .divisor { color: var(--color-divisor);  font-weight: bold;}
+        .quotient { color: var(--color-quotient);  font-weight: bold;}
+        .remainder { color: var(--color-remainder);  font-weight: bold;}
+
+        .equation-text-representation {
+            text-align: center;
+            margin-top: 15px; /* Space above this text */
+            font-size: 1.2em; /* Smaller than the main equation */
+        }
+        .equation-text-representation .divisor-text { color: var(--color-divisor); }
+        .equation-text-representation .quotient-text { color: var(--color-quotient); }
+        .equation-text-representation .remainder-text { color: var(--color-remainder); }
+        .equation-text-representation .dividend-text { color: var(--color-dividend); }
+        .equation-text-representation .symbol-text { color: #555; } /* Color for x, +, = */
+    </style>
+</head>
+<body>
+
+    <h1>Révisions de la Division Euclidienne</h1>
+    <p>
+        Cette page montre une division euclidienne.<br>
+        La division du <span class="dividend"><b>dividende</b></span> par le <span class="divisor"><b>diviseur</b></span> donne le <span class="quotient"><b>quotient</b></span> et le <span class="remainder"><b>reste</b></span>.<br><br>
+        Le <span class="dividend">dividende</span>, c'est <span class="dividend">le nombre de carrés</span>. Le <span class="divisor">diviseur</span>, c'est <span class="divisor">le contenant d'une boîte</span>. Le <span class="quotient">quotient</span>, c'est le nombre de <span class="quotient">boîtes complètes</span>. Le <span class="remainder">reste</span>, c'est les <span class="remainder">carrés restant</span>, qui ne sont pas dans une boîte complète.<br><br><br>
+        Vous pouvez ici modifier le <span class="dividend">dividende</span> ou le <span class="divisor">diviseur</span> pour comprendre la division euclidienne autrement.
+    </p>
+
+    <div class="visualization-container">
+        <div class="horizontal-elements-group">
+            <div id="visualization-box" class="visualization-box">
+            </div>
+            <!-- Graduated line parent restored -->
+            <div id="graduated-line-parent" class="graduated-line-parent">
+                <div id="graduated-line-element" class="graduated-line-element"></div>
+                <!-- Ticks will be added to graduated-line-parent by JS -->
+            </div>
+        </div>
+        <div class="horizontal-elements-group">
+            <div class="combined-indicator-sentence">
+                <div class="number-control dividend" id="indicator-dividend-control">
+                    <span class="number-value" contenteditable="true" id="indicator-dividend-value">6</span>
+                    <div class="buttons">
+                        <button class="btn" data-action="inc">▲</button>
+                        <button class="btn" data-action="dec">▼</button>
+                    </div>
+                </div>
+                <span>carrés</span>
+                <span id="quotient-text-indicator" class="quotient-text-indicator"></span>
+                <span>de</span>
+                <div class="number-control divisor" id="indicator-divisor-control">
+                    <span class="number-value" contenteditable="true" id="indicator-divisor-value">1</span>
+                     <div class="buttons">
+                        <button class="btn" data-action="inc">▲</button>
+                        <button class="btn" data-action="dec">▼</button>
+                    </div>
+                </div>
+                <span>carrés</span>,
+                <span>et </span>
+                <span class="remainder-text-highlight">restent</span>
+                <span id="sentence-remainder-value" class="remainder-value-highlight"></span>
+                <span> carrés</span>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="equation">
+        <div class="part divisor">
+             <div class="number-control" id="eq-divisor-control">
+                 <span class="number-value" contenteditable="true" id="eq-divisor-value">1</span>
+                 <div class="buttons">
+                    <button class="btn" data-action="inc">▲</button>
+                    <button class="btn" data-action="dec">▼</button>
+                </div>
+            </div>
+        </div>
+        
+        <span class="symbol">x</span>
+        
+        <div class="part quotient">
+            <span id="quotient-value">3</span>
+        </div>
+        
+        <span class="symbol">+</span>
+        
+        <div class="part remainder">
+            <span id="remainder-value">2</span>
+        </div>
+
+        <span class="symbol">=</span>
+        
+        <div class="part dividend">
+            <div class="number-control" id="eq-dividend-control">
+                 <span class="number-value" contenteditable="true" id="eq-dividend-value">6</span>
+                 <div class="buttons">
+                    <button class="btn" data-action="inc">▲</button>
+                    <button class="btn" data-action="dec">▼</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="equation-text-representation">
+        <span class="divisor-text">diviseur</span>
+        <span class="symbol-text">x</span>
+        <span class="quotient-text">quotient</span>
+        <span class="symbol-text">+</span>
+        <span class="remainder-text">reste</span>
+        <span class="symbol-text">=</span>
+        <span class="dividend-text">dividende</span>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- CONSTANTES ---
+            const DEFAULT_SQUARE_SIZE = 50; // Taille par défaut d'un carré en px
+            const DEFAULT_MARGIN_SIZE = 16;  // Effective margin BETWEEN squares vertically (CSS margin-top/bottom is 8px, so 8+8=16)
+            const H_LIMIT_FACTOR = 0.35;    // 35% de la hauteur de l'écran
+            const W_LIMIT_FACTOR = 0.40;    // 40% de la largeur de l'écran
+
+            // Constants for column chrome and spacing (used in calculateOptimalSquareSize)
+            const COL_PADDING_LR_TOTAL = 3 + 3; // px, from .row padding
+            const COL_BORDER_LR_TOTAL = 5 + 5;  // px, from .row border
+            const COL_CHROME_HORIZONTAL_PER_COL = COL_PADDING_LR_TOTAL + COL_BORDER_LR_TOTAL;
+            const MARGIN_BETWEEN_COLS = 4;      // px, from .row margin-right
+            const COL_PADDING_TOP_BOTTOM_TOTAL = 3 + 3; // px, from .row padding (top 3px, bottom 3px)
+            const COL_BORDER_BOTTOM = 5;          // px, from .row border-bottom (border-top is none)
+            const COL_VERTICAL_CHROME_PER_COL = COL_PADDING_TOP_BOTTOM_TOTAL + COL_BORDER_BOTTOM; // Total vertical space used by column's own padding/border
+
+            // --- ÉTAT ---
+            const state = {
+                dividend: 6,
+                divisor: 1,
+            };
+
+            // --- ÉLÉMENTS DU DOM ---
+            const dividendValues = [document.getElementById('indicator-dividend-value'), document.getElementById('eq-dividend-value')];
+            const divisorValues = [document.getElementById('indicator-divisor-value'), document.getElementById('eq-divisor-value')];
+            const quotientValue = document.getElementById('quotient-value');
+            const remainderValue = document.getElementById('remainder-value');
+            const visualizationBox = document.getElementById('visualization-box');
+            // const vizRightPanel = document.querySelector('.visualization-right-panel'); // Removed
+            const horizontalElementsGroup = document.querySelector('.horizontal-elements-group'); // Added
+            const graduatedLineParentElement = document.getElementById('graduated-line-parent'); // Restored
+            const graduatedLineElement = document.getElementById('graduated-line-element'); // Restored
+            const quotientTextIndicator = document.getElementById('quotient-text-indicator'); // Restored
+            const sentenceRemainderValue = document.getElementById('sentence-remainder-value');
+            // const horizontalDivisorRulerParent = document.getElementById('horizontal-divisor-ruler-parent'); // Removed
+            // const horizontalDivisorRulerElement = document.getElementById('horizontal-divisor-ruler-element'); // Removed
+            const numberControls = document.querySelectorAll('.number-control');
+
+            // --- FONCTIONS DE RENDU ---
+
+            function updateAndRenderAll() {
+                // Validation des entrées
+                if (isNaN(state.dividend) || isNaN(state.divisor)) return;
+                state.dividend = Math.max(0, Math.min(999, state.dividend));
+                state.divisor = Math.max(1, Math.min(99, state.divisor));
+
+                // Calculs
+                const quotient = Math.floor(state.dividend / state.divisor);
+                const remainder = state.dividend % state.divisor;
+
+                // Mise à jour de l'équation
+                updateEquationUI(quotient, remainder);
+
+                // Calcul de la taille et rendu des carrés
+                const squareSize = calculateOptimalSquareSize();
+                renderSquares(squareSize);
+            }
+
+            function updateEquationUI(quotient, remainder) {
+                dividendValues.forEach(el => el.textContent = state.dividend);
+                divisorValues.forEach(el => el.textContent = state.divisor);
+                quotientValue.textContent = isNaN(quotient) ? '?' : quotient;
+                remainderValue.textContent = isNaN(remainder) ? '?' : remainder;
+                if (quotientTextIndicator) { // Check if element exists
+                    if (isNaN(quotient)) {
+                        quotientTextIndicator.innerHTML = '';
+                    } else {
+                        quotientTextIndicator.innerHTML = `remplissent <span class="quotient-value-highlight">${quotient}</span> <span class="quotient-text-boites">boîtes</span>`;
+                    }
+                }
+                if (sentenceRemainderValue) {
+                    sentenceRemainderValue.textContent = isNaN(remainder) ? '?' : remainder;
+                }
+            }
+
+            function calculateOptimalSquareSize() {
+                if (state.dividend === 0) return DEFAULT_SQUARE_SIZE; // Assuming DEFAULT_SQUARE_SIZE is defined
+
+                const numCols = Math.ceil(state.dividend / state.divisor);
+
+                // Determine hLimit (max available height for square content within visualizationBox)
+                let hLimit;
+                const visualizationContainer = document.querySelector('.visualization-container');
+                // horizontalElementsGroup and quotientTextIndicator are assumed to be cached from DOM queries
+                if (visualizationContainer && horizontalElementsGroup && quotientTextIndicator) {
+                    hLimit = visualizationContainer.clientHeight;
+                    const qtiStyle = window.getComputedStyle(quotientTextIndicator);
+                    hLimit -= (quotientTextIndicator.offsetHeight + parseInt(qtiStyle.marginTop) + parseInt(qtiStyle.marginBottom));
+                    const hegStyle = window.getComputedStyle(horizontalElementsGroup);
+                    hLimit -= parseInt(hegStyle.marginBottom); // Margin between horizontalElementsGroup and quotientTextIndicator
+                    // hLimit is now the available height for the content of horizontalElementsGroup,
+                    // which includes the visualizationBox (where squares are).
+                    hLimit = Math.max(hLimit, 20); // Minimum content height
+                } else {
+                    hLimit = window.innerHeight * (typeof H_LIMIT_FACTOR !== 'undefined' ? H_LIMIT_FACTOR : 0.35); // Fallback
+                }
+
+                // Determine wLimit (max available width for square content itself)
+                const rawWLimit = window.innerWidth * (typeof W_LIMIT_FACTOR !== 'undefined' ? W_LIMIT_FACTOR : 0.40); // Fallback
+                const totalHorizontalOverheadForAllCols = (numCols * (typeof COL_CHROME_HORIZONTAL_PER_COL !== 'undefined' ? COL_CHROME_HORIZONTAL_PER_COL : 16)) +
+                                                      (Math.max(0, numCols - 1) * (typeof MARGIN_BETWEEN_COLS !== 'undefined' ? MARGIN_BETWEEN_COLS : 4));
+                const wLimitForSquaresContent = Math.max(0, rawWLimit - totalHorizontalOverheadForAllCols);
+
+                // Calculate max size based on height constraint
+                // s_h_max = (hLimit - vertical_margins_between_squares) / number_of_squares_vertically
+                const verticalMarginsInColumn = Math.max(0, state.divisor - 1) * DEFAULT_MARGIN_SIZE; // Assuming DEFAULT_MARGIN_SIZE is defined
+                let s_h_max = Infinity;
+                if (state.divisor > 0) {
+                    // Squares are sized based on hLimit, assuming hLimit is for content.
+                    // The column's own chrome will make it hLimit + chrome tall.
+                    s_h_max = (hLimit / state.divisor) - DEFAULT_MARGIN_SIZE;
+                }
+
+                // Calculate max size based on width constraint
+                // s_w_max = wLimitForSquaresContent / number_of_columns
+                let s_w_max = Infinity;
+                if (numCols > 0) {
+                    s_w_max = wLimitForSquaresContent / numCols;
+                }
+                
+                let newSize = DEFAULT_SQUARE_SIZE;
+
+                // If default size is too big, scale down
+                if (newSize > s_h_max || newSize > s_w_max) {
+                    newSize = Math.min(s_h_max, s_w_max);
+                }
+                
+                newSize = Math.floor(newSize);
+                newSize = Math.max(2, newSize); // Ensure squares are at least 2px
+
+                return newSize;
+            }
+    
+            function renderSquares(size) {
+                const numVisualCols = Math.ceil(state.dividend / state.divisor); // Nombre total de colonnes visuelles
+
+                // visualizationBox width and height are no longer set directly; it sizes by content.
+                // const vizBoxContentWidth = (numVisualCols * size) + (Math.max(0, numVisualCols - 1) * 4);
+                // visualizationBox.style.width = `${vizBoxContentWidth}px`;
+                // const vizBoxContentHeight = (state.divisor * size) + (Math.max(0, state.divisor - 1) * 4);
+                // visualizationBox.style.height = `${vizBoxContentHeight}px`;
+
+                visualizationBox.innerHTML = '';
+                // Clear previous ticks from the vertical parent (restored)
+                graduatedLineParentElement.querySelectorAll('.tick-mark').forEach(tick => tick.remove()); // Restored
+                // horizontalDivisorRulerParent.querySelectorAll('.horizontal-divisor-tick-mark').forEach(tick => tick.remove()); // Removed
+    
+                if (state.dividend === 0) {
+                    graduatedLineParentElement.style.height = '0px'; // Restored
+                    graduatedLineElement.style.height = '0px'; // Restored
+                    graduatedLineElement.style.bottom = '0px'; // Restored
+                }
+                
+                // const numVisualRows = Math.ceil(state.dividend / state.divisor); // Replaced by numVisualCols defined earlier
+                const quotient = Math.floor(state.dividend / state.divisor); // Number of full columns
+
+                // Calculate height of a single column for the vertical ruler parent container. (Restored)
+                // state.divisor is the number of squares vertically in a column. (Restored)
+                const squareStackHeight = state.divisor * (size + DEFAULT_MARGIN_SIZE); // Restored
+                
+                graduatedLineParentElement.style.height = `${squareStackHeight}px`; // Restored
+    
+                let squaresLeft = state.dividend;
+                while (squaresLeft > 0) {
+                    const columnEl = document.createElement('div'); // This element represents a column
+                    columnEl.className = 'row'; // CSS for .row is now styled as a column
+                    
+                    // state.divisor is the number of squares per column (height)
+                    const squaresInCol = Math.min(squaresLeft, state.divisor);
+
+                    if (squaresInCol === state.divisor && state.divisor > 0) { // Check if column is full
+                        columnEl.classList.add('full-column-highlight');
+                    }
+
+                    // Set content dimensions for the columnEl (actual size will include CSS padding/border)
+                    const colContentWidth = size; // Each column is one square wide (content part)
+                    const colContentHeight = (squaresInCol * size) + Math.max(0, squaresInCol - 1) * DEFAULT_MARGIN_SIZE; // Already correct
+                    // If a column is not full (last column), its content height is based on squaresInCol
+                    // If we want all columns to have the same potential height (based on state.divisor):
+                    // const colContentHeight = (state.divisor * size) + Math.max(0, state.divisor - 1) * DEFAULT_MARGIN_SIZE;
+                    // Let's use squaresInCol for now, so partial columns are shorter.
+                    // The problem description implies columns fill up to state.divisor height.
+                    // So, the visual box for the column should be based on state.divisor for height.
+                    const actualColContentHeight = state.divisor * (size + DEFAULT_MARGIN_SIZE);
+
+
+                    columnEl.style.width = colContentWidth + 'px';
+                    columnEl.style.height = actualColContentHeight + 'px';
+
+
+                    for (let i = 0; i < squaresInCol; i++) {
+                        const square = document.createElement('div');
+                        square.className = 'square';
+                        square.style.width = `${size}px`;
+                        square.style.height = `${size}px`;
+                        columnEl.appendChild(square);
+                    }
+                    // Retirer la marge du dernier élément (visuellement en bas) pour un alignement parfait dans la colonne
+                    // if(columnEl.lastChild) columnEl.lastChild.style.marginBottom = '0';
+                    
+                    visualizationBox.appendChild(columnEl);
+                    squaresLeft -= squaresInCol;
+                }
+                 // Retirer la marge de la dernière ligne
+                if(visualizationBox.lastChild) visualizationBox.lastChild.style.marginRight = '0'; // Last column's right margin
+    
+                // Vertical ruler rendering logic restored
+                const TICK_HEIGHT = 4;
+                let firstTickCenterY = 0;
+                let lastTickCenterY = 0;
+                
+                const num_ticks_to_draw = state.dividend === 0 ? 0 : state.divisor + 1;
+
+                if (num_ticks_to_draw > 0) {
+                    for (let i = 0; i < num_ticks_to_draw; i++) {
+                        const tick = document.createElement('div');
+                        tick.className = 'tick-mark';
+                        
+                        const currentRowBottomY = i * (size + DEFAULT_MARGIN_SIZE);
+                        const currentRowCenterY = currentRowBottomY + (DEFAULT_MARGIN_SIZE / 2) + (size / 2);
+                        
+                        const tickBottomEdge = currentRowCenterY - (TICK_HEIGHT / 2) - 2;
+                        tick.style.bottom = `${tickBottomEdge}px`;
+                        graduatedLineParentElement.appendChild(tick);
+
+                        if (i === 0) {
+                            firstTickCenterY = currentRowCenterY;
+                        }
+                        if (i === num_ticks_to_draw - 1) {
+                            lastTickCenterY = currentRowCenterY;
+                        }
+                    }
+                }
+
+                if (num_ticks_to_draw === 0) {
+                    graduatedLineElement.style.height = '0px';
+                    graduatedLineElement.style.bottom = '0px';
+                } else if (num_ticks_to_draw === 1) {
+                    graduatedLineElement.style.bottom = `${firstTickCenterY - (TICK_HEIGHT / 2) - 2}px`;
+                    graduatedLineElement.style.height = `${TICK_HEIGHT}px`;
+                } else {
+                    graduatedLineElement.style.bottom = `${firstTickCenterY - 2}px`;
+                    graduatedLineElement.style.height = `${lastTickCenterY - firstTickCenterY}px`;
+                    if (lastTickCenterY - firstTickCenterY === 0) {
+                        graduatedLineElement.style.height = `${TICK_HEIGHT}px`;
+                        graduatedLineElement.style.bottom = `${firstTickCenterY - (TICK_HEIGHT / 2) - 2}px`;
+                    }
+                }
+                
+                // Horizontal divisor ruler rendering logic removed
+            }
+    
+            // --- GESTION DES ÉVÉNEMENTS ---
+
+            function handleValueChange(target, newValue) {
+                const value = parseInt(newValue, 10);
+                const isDividend = target.classList.contains('dividend');
+
+                if (isDividend) {
+                    state.dividend = isNaN(value) ? state.dividend : value;
+                } else {
+                    state.divisor = isNaN(value) ? state.divisor : value;
+                }
+                updateAndRenderAll();
+            }
+
+            // Clic sur les boutons ▲ et ▼
+            document.body.addEventListener('click', (e) => {
+                if (!e.target.matches('.btn')) return;
+                const control = e.target.closest('.number-control');
+                let currentValue = parseInt(control.querySelector('.number-value').textContent, 10);
+                currentValue += (e.target.dataset.action === 'inc' ? 1 : -1);
+                handleValueChange(control, currentValue);
+            });
+            
+            // Saisie directe dans les champs
+            [...dividendValues, ...divisorValues].forEach(el => {
+                el.addEventListener('blur', (e) => handleValueChange(e.target.parentElement, e.target.textContent));
+                el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }});
+            });
+
+            // Glisser la souris pour changer la valeur
+            let isDragging = false, startY, startValue, currentControl;
+            numberControls.forEach(control => {
+                control.addEventListener('mousedown', (e) => {
+                    if (e.target.matches('.btn')) return;
+                    isDragging = true;
+                    currentControl = control;
+                    startY = e.clientY;
+                    startValue = parseInt(control.querySelector('.number-value').textContent, 10);
+                    document.body.style.cursor = 'ns-resize';
+                });
+            });
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const deltaY = startY - e.clientY;
+                const newValue = startValue + Math.floor(deltaY / 5); // Sensibilité
+                handleValueChange(currentControl, newValue);
+            });
+            document.addEventListener('mouseup', () => {
+                if(isDragging) {
+                    isDragging = false;
+                    document.body.style.cursor = 'default';
+                }
+            });
+            
+            // Recalculer si la fenêtre est redimensionnée
+            window.addEventListener('resize', updateAndRenderAll);
+
+            // --- INITIALISATION ---
+            // updateAndRenderAll(); // Now called on window.load to ensure layout is stable
+            window.addEventListener('load', updateAndRenderAll);
+        });
+    </script>
+
+</body>
+</html>
