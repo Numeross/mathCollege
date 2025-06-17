@@ -45,27 +45,32 @@
 
         p {
             color: #666;
-            margin-bottom: 30px;
+            margin-top: 0px;
         }
 
         /* --- Zone de Visualisation --- */
         .visualization-container {
-            width: 100%;
+            /* width: 100%; /* Changed: This would make it too wide with an absolute sibling */
+            max-width: 700px; /* Example: Adjust as needed for desired size */
+            width: auto;      /* Allow it to shrink or fill up to max-width */
             height: 45vh; /* Fixed height */
             position: relative; /* For potential absolute positioned children if needed */
             display: flex;
             flex-direction: column; /* Stack children vertically */
             align-items: center; /* Center children horizontally */
-            justify-content: center; /* Center content vertically if space allows, or adjust as needed */
+            justify-content: end; /* Center content vertically if space allows, or adjust as needed */
             margin-top: 40px;
-            margin-bottom: 40px;
+            margin-bottom: 80px;
+            /* Centering is now primarily handled by the parent flex container */
         }
 .horizontal-elements-group {
+            position: relative; /* Establishes positioning context for absolute children */
             display: flex;
             flex-direction: row;
-            align-items: flex-end; /* Align items to the bottom */
-            justify-content: center; /* Center the group horizontally */
-            width: 100%; /* Take full width to center its content */
+            align-items: center;
+            justify-content: center; /* Centers .visualization-container (now the main flex item) */
+            width: 100%;
+            /* The multi-line comment previously here was removed to resolve a CSS parsing issue. */
         }
 
         /* .dividend-indicator styles removed as it's no longer a separate styled block */
@@ -93,7 +98,7 @@
             background-color: var(--color-box-bg);
             border: 5px solid var(--color-box-border);
             padding: 3px;
-            box-shadow: 0 4px 12px var(--color-shadow);
+            box-shadow: 0 4px 12px 4px var(--color-shadow);
             border-radius: 8px;
             min-height: 30px; /* Ensure even empty columns have some presence */
             margin-right: 2px; /* Space between column-boxes */
@@ -115,8 +120,8 @@
         /* Vertical ruler styles restored */
         .graduated-line-parent {
             position: relative; /* For positioning ticks and the line element */
-            top: 10px; /* Décaler la règle vers le bas */
-            margin-left: 10px; /* Space between visualization box and parent */
+            bottom: -15px;
+            align-self: end;            margin-left: 10px; /* Space between visualization box and parent */
             width: 20px; /* Width to contain centered ticks (e.g., 15px tick + spacing) */
             padding-bottom: 8px;
             box-sizing: content-box; /* Height set by JS applies to content area */
@@ -284,6 +289,72 @@
         .equation-text-representation .remainder-text { color: var(--color-remainder); }
         .equation-text-representation .dividend-text { color: var(--color-dividend); }
         .equation-text-representation .symbol-text { color: #555; } /* Color for x, +, = */
+
+        /* --- Grid Representation --- */
+        .equation-grid-representation {
+            position: absolute;
+            left: 35px; /* Adjust for desired distance from the left */
+            top: 20%;   
+            transform: translateY(-50%);
+            z-index: 1; /* Ensure it's above other static/relative elements if overlap occurs */
+
+            /* Original grid display properties */
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            /* margin-top: 20px; /* May behave differently or not be needed with absolute positioning */
+            padding: 15px;
+            border: 2px solid var(--color-shadow);
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            font-size: 2.5em;
+            text-align: center;
+            grid-template-rows: 35%;
+            /* Consider setting an explicit width if its content makes it too wide */
+            /* width: 300px; */
+        }
+
+        .grid-cell {
+            padding: 10px; /* Reduced padding to make space */
+            font-weight: bold;
+            display: flex;
+            /* flex-direction: column; Default, overridden when .number-control is present */
+            align-items: center;
+            justify-content: center;
+        }
+
+        .grid-cell.number-control {
+            flex-direction: row; /* Arrange number and buttons horizontally */
+            justify-content: space-around; /* Distribute space */
+        }
+
+        .grid-cell .number-value {
+            /* Potentially reduce font size or min-width if still too large for the cell */
+            font-size: 0.8em; /* Adjust if numbers are too big with buttons */
+            min-width: 1.2em;
+            padding: 0 3px; /* Smaller padding */
+        }
+
+        .grid-cell .buttons {
+            margin-left: 5px; /* Space between number and buttons */
+        }
+        .grid-cell .btn {
+            font-size: 0.5em; /* Smaller buttons for the grid */
+            padding: 0 3px;
+        }
+
+        .grid-cell .label {
+            font-size: 0.6em;
+            font-weight: normal;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        /* Applying specific colors to grid cells, similar to equation parts */
+        #grid-dividend-control { border-radius: 0px; }
+        #grid-divisor-control { border-radius: 0px; color: var(--color-divisor); border-left: 4px solid black; border-bottom: 4px solid black; }
+        #grid-remainder { color: var(--color-remainder); } /* Remainder often has a lighter bg or text */
+        #grid-quotient { color: var(--color-quotient); border-left: 4px solid black; }
     </style>
 </head>
 <body>
@@ -291,52 +362,79 @@
     <h1>Révisions de la Division Euclidienne</h1>
     <p>
         Cette page montre une division euclidienne.<br>
-        Rappel : pas de nombres décimaux avec la division euclidienne.<br>Seulement des nombres entiers naturels.<br><br>
-        Le <span class="dividend"><b>dividende</b></span> est égal au <span class="divisor"><b>diviseur</b></span> multiplié par le <span class="quotient"><b>quotient</b></span>, plus le <span class="remainder"><b>reste</b></span>.<br><br><br>
+        Rappel : pas de nombres entiers avec la division euclidienne,<br>seulement des nombres entiers naturels.<br><br>
+        Le <span class="dividend"><b>dividende</b></span> divisé par le <span class="divisor"><b>diviseur</b></span> donne le <span class="quotient"><b>quotient</b></span> et le <span class="remainder"><b>reste</b></span>.<br><br><br>
         Ici, le <span class="dividend">dividende</span>, c'est <span class="dividend">le nombre de carrés</span>. Le <span class="divisor">diviseur</span>, c'est <span class="divisor">le contenant d'une boîte</span>. Le <span class="quotient">quotient</span>, c'est le nombre de <span class="quotient">boîtes complètes</span>. Le <span class="remainder">reste</span>, c'est les <span class="remainder">carrés restant</span>, qui ne sont pas dans une boîte complète.<br><br>
-        Vous pouvez modifier le <span class="dividend">dividende</span> ou le <span class="divisor">diviseur</span> pour comprendre la division euclidienne autrement.
+        Vous pouvez modifier le <span class="dividend">dividende</span> ou le <span class="divisor">diviseur</span> pour comprendre la division<br> euclidienne sous un autre abord.
     </p>
-
-    <div class="visualization-container">
-        <div class="horizontal-elements-group">
-            <div id="visualization-box" class="visualization-box">
+    <div class="horizontal-elements-group">
+        <!-- 2x2 Grid Representation (Moved Outside equation-wrapper) -->
+        <div class="equation-grid-representation">
+            <div class="grid-cell dividend number-control" id="grid-dividend-control"> <!-- Changed ID, added number-control -->
+                <span class="number-value" id="grid-dividend-value" contenteditable="true">?</span> <!-- Added class -->
+                <div class="buttons">
+                    <button class="btn" data-action="inc">▲</button>
+                    <button class="btn" data-action="dec">▼</button>
+                </div>
             </div>
-            <!-- Graduated line parent restored -->
-            <div id="graduated-line-parent" class="graduated-line-parent">
-                <div id="graduated-line-element" class="graduated-line-element"></div>
-                <!-- Ticks will be added to graduated-line-parent by JS -->
+            <div class="grid-cell divisor number-control" id="grid-divisor-control"> <!-- Changed ID, added number-control -->
+                <span class="number-value" id="grid-divisor-value" contenteditable="true">?</span> <!-- Added class -->
+                <div class="buttons">
+                    <button class="btn" data-action="inc">▲</button>
+                    <button class="btn" data-action="dec">▼</button>
+                </div>
+            </div>
+            <div class="grid-cell" id="grid-remainder">
+                <span>?</span> <!-- Placeholder for remainder value -->
+            </div>
+            <div class="grid-cell" id="grid-quotient">
+                <span>?</span> <!-- Placeholder for quotient value -->
             </div>
         </div>
-        <div class="horizontal-elements-group">
-            <div class="combined-indicator-sentence">
-                <div class="number-control dividend" id="indicator-dividend-control">
-                    <span class="number-value" contenteditable="true" id="indicator-dividend-value">6</span>
-                    <div class="buttons">
-                        <button class="btn" data-action="inc">▲</button>
-                        <button class="btn" data-action="dec">▼</button>
-                    </div>
+        <div class="visualization-container">
+            <div class="horizontal-elements-group">
+                <div id="visualization-box" class="visualization-box">
                 </div>
-                <span>carrés</span>
-                <span id="quotient-text-indicator" class="quotient-text-indicator"></span>
-                <span>de</span>
-                <div class="number-control divisor" id="indicator-divisor-control">
-                    <span class="number-value" contenteditable="true" id="indicator-divisor-value">1</span>
-                     <div class="buttons">
-                        <button class="btn" data-action="inc">▲</button>
-                        <button class="btn" data-action="dec">▼</button>
-                    </div>
+                <!-- Graduated line parent restored -->
+                <div id="graduated-line-parent" class="graduated-line-parent">
+                    <div id="graduated-line-element" class="graduated-line-element"></div>
+                    <!-- Ticks will be added to graduated-line-parent by JS -->
                 </div>
-                <span>carrés</span>,
-                <span>et </span>
-                <span class="remainder-text-highlight">restent</span>
-                <span id="sentence-remainder-value" class="remainder-value-highlight"></span>
-                <span> carrés</span>
             </div>
+            <div class="horizontal-elements-group">
+                <div class="combined-indicator-sentence">
+                    <div class="number-control dividend" id="indicator-dividend-control">
+                        <span class="number-value" contenteditable="true" id="indicator-dividend-value">6</span>
+                        <div class="buttons">
+                            <button class="btn" data-action="inc">▲</button>
+                            <button class="btn" data-action="dec">▼</button>
+                        </div>
+                    </div>
+                    <span>carrés</span>
+                    <span id="quotient-text-indicator" class="quotient-text-indicator"></span>
+                    <span>de</span>
+                    <div class="number-control divisor" id="indicator-divisor-control">
+                        <span class="number-value" contenteditable="true" id="indicator-divisor-value">1</span>
+                        <div class="buttons">
+                            <button class="btn" data-action="inc">▲</button>
+                            <button class="btn" data-action="dec">▼</button>
+                        </div>
+                    </div>
+                    <span>carrés</span>,
+                    <span>et </span>
+                    <span class="remainder-text-highlight">restent</span>
+                    <span id="sentence-remainder-value" class="remainder-value-highlight"></span>
+                    <span> carrés</span>
+                </div>
 
+            </div>
         </div>
     </div>
 
     <div class="equation-wrapper">
+        <p>
+            Formule pour vérifier une division euclidienne :<br>
+        </p>
         <div class="equation">
             <div class="part dividend">
                 <div class="number-control dividend" id="eq-dividend-control">
@@ -407,8 +505,8 @@
             };
 
             // --- ÉLÉMENTS DU DOM ---
-            const dividendValues = [document.getElementById('indicator-dividend-value'), document.getElementById('eq-dividend-value')];
-            const divisorValues = [document.getElementById('indicator-divisor-value'), document.getElementById('eq-divisor-value')];
+            const dividendValues = [document.getElementById('indicator-dividend-value'), document.getElementById('eq-dividend-value'), document.getElementById('grid-dividend-value')]; // ID of span
+            const divisorValues = [document.getElementById('indicator-divisor-value'), document.getElementById('eq-divisor-value'), document.getElementById('grid-divisor-value')];   // ID of span
             const quotientValue = document.getElementById('quotient-value');
             const remainderValue = document.getElementById('remainder-value');
             const visualizationBox = document.getElementById('visualization-box');
@@ -421,6 +519,12 @@
             // const horizontalDivisorRulerParent = document.getElementById('horizontal-divisor-ruler-parent'); // Removed
             // const horizontalDivisorRulerElement = document.getElementById('horizontal-divisor-ruler-element'); // Removed
             const numberControls = document.querySelectorAll('.number-control');
+
+            // Grid representation elements
+            // const gridDividendValue = document.querySelector('#grid-dividend span:last-child'); // Now part of dividendValues
+            // const gridDivisorValue = document.querySelector('#grid-divisor span:last-child');   // Now part of divisorValues
+            const gridQuotientValue = document.querySelector('#grid-quotient span:last-child');
+            const gridRemainderValue = document.querySelector('#grid-remainder span:last-child');
 
             // --- FONCTIONS DE RENDU ---
 
@@ -457,6 +561,12 @@
                 if (sentenceRemainderValue) {
                     sentenceRemainderValue.textContent = isNaN(remainder) ? '?' : remainder;
                 }
+
+                // Update grid representation
+                // if (gridDividendValue) gridDividendValue.textContent = state.dividend; // Handled by dividendValues array
+                // if (gridDivisorValue) gridDivisorValue.textContent = state.divisor;   // Handled by divisorValues array
+                if (gridQuotientValue) gridQuotientValue.textContent = isNaN(quotient) ? '?' : quotient;
+                if (gridRemainderValue) gridRemainderValue.textContent = isNaN(remainder) ? '?' : remainder;
             }
 
             function calculateOptimalSquareSize() {
