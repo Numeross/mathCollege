@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Découverte des Diviseurs de 10</title>
+    <style>
+        /* --- Variables de Couleur (inspirées de diviseur.html) --- */
+        :root {
+            --color-bg: #f0f2f5;
+            --color-text: #333;
+            --color-box-bg: #ffffff;
+            --color-dividend: #007bff;
+            --color-divisor: #dc3545;
+            --color-quotient: #28a745;
+            --color-remainder: #ffc107; /* Orange/Yellow for remainder */
+            --color-remainder-zero: #28a745; /* Green if remainder is zero, for emphasis */
+            --color-shadow: rgba(0, 0, 0, 0.1);
+            --color-button-default-border: #ccc;
+            --color-button-hover-bg: #e9e9e9;
+            --color-error-bg: #dc3545;
+            --color-success-bg: #28a745;
+            --color-white: #ffffff;
+        }
+
+        /* --- Styles Généraux --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            margin: 0;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        h1, h2, h3, p {
+            text-align: center;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        h1 {
+            color: var(--color-text);
+            margin-bottom: 10px;
+        }
+        h2 {
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+        h3 {
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+        p.intro {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        /* --- Zone d'affichage des divisions --- */
+        #divisions-display-area {
+            /* display: flex; */ /* Changed for grid layout */
+            /* flex-direction: column; */ /* Changed for grid layout */
+            /* align-items: center; */ /* Changed for grid layout */
+            /* gap: 30px; */ /* Changed for grid layout */
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* Existing style from inline */
+            gap: 20px; /* Existing style from inline */
+            max-width: 1000px; /* Existing style from inline */
+            margin: 20px auto; /* Existing style from inline */
+        }
+
+        .division-block {
+            background-color: var(--color-box-bg);
+            border: 1px solid #cccccc; /* Slightly darker border for better separation */
+            border-radius: 8px;
+            padding: 15px;
+            /* width: 100%; */ /* Will be sized by grid column */
+            box-sizing: border-box;
+            /* max-width: 600px; */ /* Will be sized by grid column */
+            box-shadow: 0 2px 5px var(--color-shadow);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            display: flex; /* For centering content */
+            align-items: center; /* For centering content */
+            justify-content: center; /* For centering content */
+            font-size: 1.5em; /* Make number larger */
+            font-weight: bold;
+            min-height: 80px; /* Ensure blocks have some height */
+        }
+        .division-block:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        /* Styles for selected/error states on division-block (no changes, just moved for grouping) */
+        .division-block.selected-correct {
+            background-color: #d4edda; /* Light green */
+            border-color: var(--color-success-bg);
+            box-shadow: 0 0 10px var(--color-success-bg);
+        }
+        .division-block.error-shake {
+            background-color: #f8d7da; /* Light red */
+            border-color: var(--color-error-bg);
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        /* --- Zone de visualisation survol --- */
+        #hover-visualization-container {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: var(--color-box-bg);
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px var(--color-shadow);
+            max-width: 800px; /* Adjust as needed */
+            margin-left: auto;
+            margin-right: auto;
+            display: none; /* Initially hidden */
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* Styles pour la grille (inspirés de eucl.html) - Préférer les classes de premiers.html si possible */
+        .hover-equation-grid-representation { /* Renamed from .equation-grid-representation */
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: 35% auto; /* Match eucl.html first row ratio */
+            width: 100px; /* Adjusted from eucl.html's 2.5em font size context */
+            padding: 10px;
+            border: 1px solid var(--color-shadow);
+            border-radius: 6px;
+            background-color: #f9f9f9;
+            font-size: 1.4em; /* Adjusted */
+            text-align: center;
+            margin: 0 auto 10px auto;
+        }
+
+        .hover-grid-cell { /* Renamed from .grid-cell */
+            padding: 8px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* .hover-grid-cell .number-value will use existing .number-value from premiers.html if applicable or define here */
+        /* Color classes like .dividend-value, .divisor-value will be reused from premiers.html */
+        
+        /* Border styles for hover grid, matching eucl.html */
+        .divisor-cell-style {
+            border-left: 4px solid black;
+            border-bottom: 4px solid black;
+        }
+        .quotient-input-cell-style {
+            border-left: 4px solid black;
+        }
+
+        /* Styles pour la visualisation des carrés (inspirés de eucl.html) */
+        .hover-visualization-box { /* Renamed from .visualization-box in eucl.html */
+            display: flex;
+            flex-direction: row;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 4px; /* Space between columns */
+            margin-top: 10px;
+            min-height: 100px; /* Placeholder */
+        }
+
+        .hover-viz-column { /* Equivalent to .row in eucl.html */
+            display: flex;
+            flex-direction: column-reverse;
+            background-color: var(--color-box-bg);
+            border: 4px solid var(--color-remainder); /* Default to remainder color, can be changed by JS */
+            padding: 2px;
+            border-radius: 4px;
+            min-height: 20px;
+            /* width will be set by square size + padding/border */
+        }
+        .hover-viz-column.full {
+            border-color: var(--color-quotient);
+        }
+
+        .hover-viz-square { /* Equivalent to .square in eucl.html */
+            background-color: var(--color-dividend); /* Was --color-square in eucl.html */
+            opacity: 0.9;
+            border-radius: 2px;
+            margin: 3px 0px; /* Adjusted from eucl.html */
+            /* width and height set by JS */
+        }
+
+
+        /* --- Zone de message de succès --- */
+        #success-message-area {
+            background-color: #e6ffed;
+            border: 1px solid var(--color-success-bg);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+            max-width: 600px;
+            margin-left: auto; /* Center */
+            margin-right: auto; /* Center */
+        }
+        #success-message-area p {
+            margin: 5px 0;
+            color: var(--color-text);
+        }
+        #success-message-area p:first-child {
+            font-weight: bold;
+            color: var(--color-success-bg);
+            font-size: 1.2em;
+        }
+        
+        /* Utility classes for text colors (no changes) */
+        .dividend-text-color { color: var(--color-dividend); font-weight: bold; }
+        .divisor-text-color { color: var(--color-divisor); font-weight: bold; }
+        .quotient-text-color { color: var(--color-quotient); font-weight: bold; }
+        .remainder-text-color { color: var(--color-remainder); font-weight: bold; }
+
+    </style>
+</head>
+<body>
+    <h1>Cliquez sur tous les diviseurs de 10</h1>
+    <p class="intro">Survolez un nombre pour voir la division correspondante.</p>
+
+    <div id="divisions-display-area">
+        <!-- Les blocs de division (numéros) seront générés ici par JavaScript -->
+    </div>
+
+    <div id="hover-visualization-container">
+        <!-- La visualisation (grille + carrés) apparaîtra ici au survol -->
+    </div>
+
+    <!-- <h2>Sélectionnez les diviseurs de 10 parmi les nombres suivants :</h2> -->
+    <!-- <div id="divisor-selector-area"> -->
+        <!-- Les boutons de sélection (1 à 12) seront générés ici par JavaScript -->
+    <!-- </div> -->
+
+    <div id="success-message-area" style="display:none;">
+        <p>Bravo ! Vous avez trouvé tous les diviseurs de 10 : <span class="quotient-text-color">1, 2, 5, et 10</span>.</p>
+        <p>Effectivement, un nombre est un diviseur quand il n'y a pas de reste.</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const DIVIDEND = 10;
+            const POTENTIAL_DIVISORS_RANGE = { start: 1, end: 12 };
+            const CORRECT_DIVISORS_OF_10 = [1, 2, 5, 10];
+
+            const divisionsDisplayArea = document.getElementById('divisions-display-area');
+            // const divisorSelectorArea = document.getElementById('divisor-selector-area'); // Removed
+            const successMessageArea = document.getElementById('success-message-area');
+            const hoverVisualizationContainer = document.getElementById('hover-visualization-container');
+
+            let selectedCorrectDivisors = new Set();
+
+            function renderAllDivisions() {
+                for (let d = POTENTIAL_DIVISORS_RANGE.start; d <= POTENTIAL_DIVISORS_RANGE.end; d++) {
+                    const quotient = Math.floor(DIVIDEND / d);
+                    const remainder = DIVIDEND % d;
+                    renderSingleDivision(d, quotient, remainder);
+                }
+            }
+
+            function renderSingleDivision(divisor, quotient, remainder) {
+                const block = document.createElement('div');
+                block.className = 'division-block';
+                block.dataset.divisorValue = divisor; // Store divisor value
+                block.style.cursor = 'pointer';
+                block.textContent = divisor; // Display only the number
+                block.addEventListener('click', handleDivisionBlockClick);
+                block.addEventListener('mouseover', handleDivisionBlockMouseOver);
+                block.addEventListener('mouseout', handleDivisionBlockMouseOut);
+
+                // // const title = document.createElement('h3'); // Removed h3 title
+                // // title.innerHTML = '<span class="dividend-text-color">' + DIVIDEND + '</span> \u00F7 <span class="divisor-text-color">' + divisor + '</span>';
+                // // block.appendChild(title);
+
+                // const equationRep = document.createElement('div'); // Removed
+                // equationRep.className = 'equation-representation'; // Removed
+                // equationRep.innerHTML = // Removed
+                //     '<span class="dividend-text-color">' + DIVIDEND + '</span> \u00F7 <span class="divisor-text-color">' + divisor + '</span> = <span class="quotient-text-color">' + quotient + '</span> reste <span class="remainder-text-color">' + remainder + '</span>'; // Removed zero/non-zero class logic
+                // block.appendChild(equationRep); // Removed
+
+                // const gridRep = document.createElement('div'); // Removed
+                // gridRep.className = 'equation-grid-representation'; // Removed
+                // gridRep.innerHTML = // Removed
+                //     '<div class="grid-cell"><span class="number-value dividend-value">' + DIVIDEND + '</span></div>' +
+                //     '<div class="grid-cell divisor-cell-style"><span class="number-value divisor-value">' + divisor + '</span></div>' +
+                //     '<div class="grid-cell"><span class="number-value remainder-value">' + remainder + '</span></div>' + // Removed zero/non-zero class logic
+                //     '<div class="grid-cell quotient-input-cell-style"><span class="number-value quotient-value">' + quotient + '</span></div>';
+                // block.appendChild(gridRep); // Removed
+
+                // const squaresRepContainer = document.createElement('div'); // Removed
+                // squaresRepContainer.className = 'result-visualization'; // Removed
+                // generateSquareViz(squaresRepContainer, DIVIDEND, divisor, quotient, remainder); // Call will be moved to hover
+                // block.appendChild(squaresRepContainer); // Removed
+                
+                divisionsDisplayArea.appendChild(block);
+            }
+
+            function renderHoverGrid(dividendToDisplay, divisorToDisplay, quotientToDisplay, remainderToDisplay, parentElement) {
+                const gridRep = document.createElement('div');
+                gridRep.className = 'hover-equation-grid-representation'; // Use new class
+                gridRep.innerHTML =
+                    '<div class="hover-grid-cell"><span class="number-value dividend-value">' + dividendToDisplay + '</span></div>' +
+                    // Re-use styling from premiers.html for cells if possible, or define specific for hover-grid-cell
+                    '<div class="hover-grid-cell divisor-cell-style"><span class="number-value divisor-value">' + divisorToDisplay + '</span></div>' +
+                    '<div class="hover-grid-cell"><span class="number-value remainder-value">' + remainderToDisplay + '</span></div>' +
+                    '<div class="hover-grid-cell quotient-input-cell-style"><span class="number-value quotient-value">' + quotientToDisplay + '</span></div>';
+                parentElement.appendChild(gridRep);
+            }
+
+            function renderHoverSquares(dividendToDisplay, divisorToDisplay, quotientToDisplay, remainderToDisplay, parentElement) {
+                const SQUARE_SIZE = 20; // px, Increased square size
+                const SQUARE_MARGIN_Y = 2; // px, from original .viz-square margin (can be adjusted if needed)
+
+                const vizBoxContainer = document.createElement('div');
+                vizBoxContainer.className = 'hover-visualization-box'; // Container for all columns
+                vizBoxContainer.innerHTML = '';
+
+                // Render quotient columns
+                for (let i = 0; i < quotientToDisplay; i++) {
+                    const columnEl = document.createElement('div');
+                    columnEl.className = 'hover-viz-column full'; // A full column for quotient
+                    
+                    for (let j = 0; j < divisorToDisplay; j++) {
+                        // Ensure not to add more squares than dividend in total, though less critical for pure viz
+                        const square = document.createElement('div');
+                        square.className = 'hover-viz-square';
+                        square.style.width = `${SQUARE_SIZE}px`;
+                        square.style.height = `${SQUARE_SIZE}px`;
+                        columnEl.appendChild(square);
+                    }
+                    // Set column width based on square size + padding/border from .hover-viz-column
+                    // Approx: SQUARE_SIZE + 2*padding(2px) + 2*border(4px) = 20 + 4 + 8 = 32px
+                    columnEl.style.minWidth = `${SQUARE_SIZE + 4 + 8}px`;
+                    vizBoxContainer.appendChild(columnEl);
+                }
+
+                // Render remainder column
+                if (remainderToDisplay > 0) {
+                    const columnEl = document.createElement('div');
+                    columnEl.className = 'hover-viz-column'; // Default border is remainder color
+                    
+                    for (let k = 0; k < remainderToDisplay; k++) {
+                        const square = document.createElement('div');
+                        square.className = 'hover-viz-square';
+                        square.style.width = `${SQUARE_SIZE}px`;
+                        square.style.height = `${SQUARE_SIZE}px`;
+                        columnEl.appendChild(square);
+                    }
+                    columnEl.style.minWidth = `${SQUARE_SIZE + 4 + 8}px`; // Update for consistency
+                    vizBoxContainer.appendChild(columnEl);
+                }
+                
+                if (quotientToDisplay > 0 || remainderToDisplay > 0) {
+                    parentElement.appendChild(vizBoxContainer);
+                    // vizBoxContainer.style.display = 'flex'; // Already handled by parent container
+                }
+            }
+
+
+            function handleDivisionBlockMouseOver(event) {
+                const currentDivisor = parseInt(event.currentTarget.dataset.divisorValue);
+                if (isNaN(currentDivisor)) return;
+
+                const quotient = Math.floor(DIVIDEND / currentDivisor);
+                const remainder = DIVIDEND % currentDivisor;
+
+                hoverVisualizationContainer.innerHTML = ''; // Clear previous
+                renderHoverGrid(DIVIDEND, currentDivisor, quotient, remainder, hoverVisualizationContainer);
+                renderHoverSquares(DIVIDEND, currentDivisor, quotient, remainder, hoverVisualizationContainer);
+                hoverVisualizationContainer.style.display = 'flex';
+            }
+
+            function handleDivisionBlockMouseOut() {
+                hoverVisualizationContainer.style.display = 'none';
+                hoverVisualizationContainer.innerHTML = ''; // Clear content
+            }
+
+            // function renderSelectorButtons() { // Removed
+            //     for (let d = POTENTIAL_DIVISORS_RANGE.start; d <= POTENTIAL_DIVISORS_RANGE.end; d++) {
+            //         const button = document.createElement('button');
+            //         button.className = 'selector-number';
+            //         button.dataset.value = d;
+            //         button.textContent = d;
+            //         button.addEventListener('click', handleDivisionBlockClick); // Changed to handleDivisionBlockClick
+            //         divisorSelectorArea.appendChild(button);
+            //     }
+            // }
+
+            function handleDivisionBlockClick(event) {
+                const block = event.currentTarget; // Changed from event.target to currentTarget for the block itself
+                const value = parseInt(block.dataset.divisorValue);
+
+                // Prevent re-processing if already selected or in error state (though error state clears)
+                if (block.classList.contains('selected-correct')) {
+                    return;
+                }
+                // Clear previous error shake if any, before new validation
+                block.classList.remove('error-shake');
+
+
+                if (CORRECT_DIVISORS_OF_10.includes(value)) {
+                    block.classList.add('selected-correct');
+                    selectedCorrectDivisors.add(value);
+
+                    // Check if all correct divisors are found
+                    if (selectedCorrectDivisors.size === CORRECT_DIVISORS_OF_10.length) {
+                        let allActuallyFound = true;
+                        for (const correctDiv of CORRECT_DIVISORS_OF_10) {
+                            if (!selectedCorrectDivisors.has(correctDiv)) {
+                                allActuallyFound = false;
+                                break;
+                            }
+                        }
+                        if (allActuallyFound) {
+                            successMessageArea.style.display = 'block';
+                            successMessageArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+                } else {
+                    block.classList.add('error-shake');
+                    setTimeout(() => {
+                        block.classList.remove('error-shake');
+                    }, 500);
+                }
+            }
+
+            renderAllDivisions();
+            // renderSelectorButtons(); // Removed call
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leçon Interactive sur les Diviseurs</title>
+    <style>
+        /* --- Variables de Couleur --- */
+        :root {
+            --color-bg: #f0f2f5;
+            --color-text: #333;
+            --color-box-bg: #ffffff;
+            --color-dividend: #007bff;
+            --color-divisor: #dc3545;
+            --color-quotient: #28a745;
+            --color-remainder: #ffc107;
+            --color-shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- Styles Généraux --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            margin: 0;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        h1 {
+            text-align: left;
+            max-width: 800px;
+            margin-bottom: 20px;
+            color: var(--color-text);
+            font-size: 1.8em;
+        }
+
+        .exercise-instruction {
+            color: #666;
+            margin-top: 3px;
+            margin-bottom: 5px;
+            font-size: 1em;
+            max-width: 800px;
+        }
+        
+        .exercise-hidden {
+            display: none !important;
+        }
+
+        .exercise-container {
+            padding-bottom: 10px; 
+            border-bottom: 1px solid #ddd; 
+        }
+        .exercise-container:last-child {
+            border-bottom: none;
+        }
+
+        .exercise-content-wrapper { /* New wrapper for flex layout */
+            display: flex;
+            align-items: center; /* Default alignment */
+        }
+        
+        .exercise-content-wrapper.align-start { /* Class to align items to the start for pedagogy panels */
+            align-items: flex-start;
+        }
+
+
+        /* --- Grid Representation --- */
+        .equation-grid-representation {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            width: 160px;
+            height: 150px;
+            padding: 10px;
+            border: 2px solid var(--color-shadow);
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            font-size: 1.8em;
+            text-align: center;
+            margin-right: 20px;
+            grid-template-rows: 35%; 
+        }
+
+        .grid-cell {
+            padding: 8px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .grid-cell.number-control {
+            flex-direction: row;
+            justify-content: space-around;
+        }
+        
+        .grid-cell.number-control {
+            cursor: ns-resize;
+            transition: background-color 0.2s;
+            border-radius: 0px;
+        }
+        .grid-cell.number-control:hover {
+            background-color: #e0e0e0;
+        }
+
+        .grid-cell .number-value {
+            font-size: 0.9em;
+            min-width: 1.2em;
+            padding: 0 3px;
+            outline: none;
+            text-align: center;
+            background-color: transparent;
+            border: none;
+        }
+
+        .equation-grid-representation .dividend-value { color: var(--color-dividend); }
+        .equation-grid-representation .divisor-value { color: var(--color-divisor); }
+        .equation-grid-representation .remainder-value { color: var(--color-text); }
+        .equation-grid-representation .quotient-value { color: var(--color-text); }
+
+        .equation-grid-representation .divisor-cell-style { 
+            border-left: 3px solid black;
+            border-bottom: 3px solid black;
+        }
+        .equation-grid-representation .quotient-input-cell-style {
+            border-left: 3px solid black;
+        }
+
+        .grid-cell .buttons {
+            margin-left: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .grid-cell .btn {
+            font-size: 0.6em;
+            padding: 1px 3px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: #888;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+        .grid-cell .btn:hover {
+            color: #333;
+        }
+
+        .validate-btn {
+            padding: 10px 20px;
+            font-size: 1em;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            margin-bottom: 10px; 
+        }
+        .validate-btn:hover {
+            background-color: #0056b3;
+        }
+        .validate-btn.validation-error {
+            animation: shake 0.5s;
+            background-color: #dc3545;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .feedback-message {
+            margin-left: 0;
+            font-size: 1em;
+            display: none;
+            margin-bottom: 10px;
+        }
+        .correct-text {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .quotient-text-color {
+            color: var(--color-quotient);
+            font-weight: bold;
+        }
+        .remainder-text-color {
+            color: var(--color-remainder);
+            font-weight: bold;
+        }
+.dividend-text-color { color: var(--color-dividend); }
+.divisor-text-color { color: var(--color-divisor); }
+
+.exercise-equation-display {
+    font-size: 1.2em; /* Taille moyenne */
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.result-and-verification-wrapper {
+    display: flex; /* Will be set to flex by JS when correct */
+    align-items: flex-start; 
+    margin-top: 10px;
+    display: none; /* Initially hidden */
+}
+
+.verification-text-area {
+    margin-left: 20px;
+    font-size: 0.95em;
+}
+
+.verification-text-area p {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+.verification-text-area p:last-child {
+    margin-bottom: 0;
+}
+/* --- Static Example Section --- */
+.static-example-section {
+    padding: 20px;
+    margin-bottom: 30px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #fdfdfd;
+    max-width: 800px; /* Or adjust to your preference */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.static-example-section h2 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 1.6em;
+    color: var(--color-text);
+}
+
+.static-example-section .exercise-content-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px; 
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.static-example-section .equation-grid-representation .quotient-value {
+    color: var(--color-quotient);
+}
+.static-example-section .equation-grid-representation .remainder-value {
+    color: var(--color-remainder);
+}
+
+.static-example-section .result-and-verification-wrapper {
+    display: flex; 
+    align-items: flex-start;
+    margin-top: 0; 
+}
+
+.static-example-section .result-visualization {
+    display: flex;
+}
+
+.static-example-section .verification-text-area {
+    margin-left: 20px; /* Retain margin if not wrapping */
+}
+/* --- Static Example Section --- */
+.static-example-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    margin-bottom: 30px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    max-width: 700px; /* Adjust as needed */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.static-example-section h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.5em;
+    color: var(--color-text);
+}
+
+.static-example-section .exercise-equation-display {
+    text-align: center; /* Center the "a / b" text */
+}
+
+.static-example-section .exercise-content-wrapper {
+    justify-content: center; /* Center grid and validation area */
+    width: 100%;
+}
+
+.static-example-section .equation-grid-representation .grid-cell {
+    cursor: default !important; /* Override ns-resize */
+}
+.static-example-section .equation-grid-representation .grid-cell:hover {
+    background-color: transparent !important; /* Override hover */
+}
+
+.static-example-section .result-and-verification-wrapper {
+    display: flex !important; /* Always visible */
+    align-items: center; /* Vertically align viz and text */
+}
+
+.static-example-section .result-visualization {
+    display: flex !important; /* Ensure viz squares are flexed */
+    margin-top: 0; /* Adjust spacing if needed */
+    margin-bottom: 0;
+}
+
+.static-example-section .feedback-message {
+    text-align: center; /* Center the "Correct" message */
+    margin-bottom: 15px; /* Space before visualization */
+}
+
+        .validation-area {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-left: 20px;
+        }
+        
+        .next-exercise-btn {
+            /* style is inline for now, can be moved here */
+        }
+
+        .result-visualization {
+            display: flex; 
+            margin-top: 10px; /* Added to ensure space if feedback message is short */
+            margin-bottom: 10px; /* Space before next-exercise button */
+        }
+        .viz-box {
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 3px;
+            border: 5px solid;
+            border-radius: 8px;
+            margin-right: 4px;
+            min-width: 36px;
+            background-color: var(--color-box-bg);
+        }
+        .viz-box:last-child {
+            margin-right: 0;
+        }
+        .viz-quotient-box {
+            border-color: var(--color-quotient);
+        }
+        .viz-remainder-box {
+            border-color: var(--color-remainder);
+            min-height: 52px;
+        }
+        .viz-square {
+            background-color: var(--color-dividend);
+            width: 30px;
+            height: 30px;
+            margin: 3.5px 0px;
+            border-radius: 3px;
+        }
+        .divisor-observation-panel,
+        .divisor-question-panel,
+        #divisor-definition-panel {
+            padding: 15px;
+            border: 1px solid #b0bec5; /* Softer border */
+            border-radius: 8px;
+            background-color: #eceff1; /* Light grey-blue */
+            margin-top: 10px; /* Spacing for panels outside flex wrapper */
+        }
+        
+        .exercise-content-wrapper > .divisor-observation-panel,
+        .exercise-content-wrapper > .divisor-question-panel {
+            margin-left: 20px;
+            max-width: 350px; 
+            /* align-self: flex-start; /* Removed to allow centering if wrapper is taller */
+        }
+
+        #divisor-definition-panel { /* Center this as it's block level after exercises */
+            margin-left: auto;
+            margin-right: auto;
+            max-width: 600px; /* Wider for these content blocks */
+        }
+        #divisor-definition-panel {
+            border-color: var(--color-dividend); /* Blue border for definition */
+            background-color: #e3f2fd; /* Lighter blue */
+        }
+        .divisor-observation-panel p,
+        .divisor-question-panel p,
+        #divisor-definition-panel p {
+            margin-top: 0;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        .divisor-observation-panel p:last-of-type, /* Use last-of-type to target last p before button */
+        .divisor-question-panel p:last-of-type,
+        #divisor-definition-panel p:last-of-type {
+            margin-bottom: 0;
+        }
+        #divisor-definition-panel h2, .divisor-question-panel h3 {
+            margin-top: 0;
+            color: var(--color-text);
+        }
+        .interactive-panel-button {
+            padding: 8px 15px;
+            font-size: 0.9em;
+            color: white;
+            background-color: #546e7a; /* Blue-grey */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 15px; /* Add some space above button */
+            display: inline-block;
+        }
+        .interactive-panel-button:hover {
+            background-color: #37474f;
+        }
+.pedagogy-button-group {
+            display: flex;
+            gap: 10px; /* Space between Oui/Non buttons */
+            margin-top: 15px; /* Consistent with interactive-panel-button */
+        }
+
+        .pedagogy-choice-button.pedagogy-button-error {
+            animation: shake 0.5s;
+            background-color: #dc3545; /* Red, same as .validation-error */
+        }
+        .pedagogy-choice-button.pedagogy-button-correct {
+            background-color: #198754; /* A more vibrant green (Bootstrap success green) */
+            border-color: #198754; /* Ensure border matches */
+            color: white !important; /* Ensure text is white */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Leçon Interactive sur le diviseur</h1>
+
+<div class="static-example-section">
+        <h2>Exemple de division euclidienne :</h2>
+        <p class="exercise-equation-display" style="text-align: center; margin-bottom: 20px;">
+            <span class="dividend-text-color">10</span> ÷ <span class="divisor-text-color">3</span>
+        </p>
+        <div class="exercise-content-wrapper">
+            <div class="equation-grid-representation">
+                <div class="grid-cell">
+                    <span class="number-value dividend-value">10</span>
+                </div>
+                <div class="grid-cell divisor-cell-style">
+                    <span class="number-value divisor-value">3</span>
+                </div>
+                <div class="grid-cell" style="cursor: default;"> <!-- Static remainder -->
+                    <span class="number-value" style="color: var(--color-remainder);">1</span>
+                </div>
+                <div class="grid-cell quotient-input-cell-style" style="cursor: default;"> <!-- Static quotient -->
+                    <span class="number-value" style="color: var(--color-quotient);">3</span>
+                </div>
+            </div>
+            <div class="result-and-verification-wrapper" style="display: flex; align-items: center;">
+                <div class="result-visualization" style="display: flex;">
+                    <!-- Quotient boxes for 10 / 3 = 3 Q -->
+                    <div class="viz-box viz-quotient-box">
+                        <div class="viz-square"></div><div class="viz-square"></div><div class="viz-square"></div>
+                    </div>
+                    <div class="viz-box viz-quotient-box">
+                        <div class="viz-square"></div><div class="viz-square"></div><div class="viz-square"></div>
+                    </div>
+                    <div class="viz-box viz-quotient-box">
+                        <div class="viz-square"></div><div class="viz-square"></div><div class="viz-square"></div>
+                    </div>
+                    <!-- Remainder box for 1 R -->
+                    <div class="viz-box viz-remainder-box">
+                        <div class="viz-square"></div>
+                    </div>
+                </div>
+                <div class="verification-text-area">
+                    <p>Vérification : <span class="divisor-text-color">3</span> × <span class="quotient-text-color">3</span> + <span class="remainder-text-color">1</span> = <span class="dividend-text-color">10</span></p>
+                    <p><span class="dividend-text-color">10</span> divisé par <span class="divisor-text-color">3</span> donne <span class="quotient-text-color">3</span>, reste <span class="remainder-text-color">1</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr style="margin: 25px auto; width: 80%; border-color: #e0e0e0;">
+    <!-- Exercise 0 -->
+    <div class="exercise-container" data-exercise-index="0">
+        <p class="exercise-instruction">Entrez le quotient et le reste pour la division de 7 par 2, puis validez.</p>
+        <div class="exercise-content-wrapper">
+            <div class="equation-grid-representation">
+                <div class="grid-cell">
+                    <span class="number-value dividend-value">7</span>
+                </div>
+                <div class="grid-cell divisor-cell-style">
+                    <span class="number-value divisor-value">2</span>
+                </div>
+                <div class="grid-cell number-control remainder-control">
+                    <span class="number-value remainder-value" contenteditable="true">0</span>
+                    <div class="buttons">
+                        <button class="btn" data-action="inc">▲</button>
+                        <button class="btn" data-action="dec">▼</button>
+                    </div>
+                </div>
+                <div class="grid-cell number-control quotient-control quotient-input-cell-style">
+                    <span class="number-value quotient-value" contenteditable="true">1</span>
+                    <div class="buttons">
+                        <button class="btn" data-action="inc">▲</button>
+                        <button class="btn" data-action="dec">▼</button>
+                    </div>
+                </div>
+            </div>
+            <div class="validation-area">
+                <button class="validate-btn">Valider</button>
+                <p class="feedback-message"></p>
+                <div class="result-and-verification-wrapper" style="display: none;">
+                    <div class="result-visualization"></div>
+                    <div class="verification-text-area"></div>
+                </div>
+                <button class="next-exercise-btn" style="display: none; margin-top: 10px; padding: 10px 20px; font-size: 1em; color: white; background-color: #28a745; border: none; border-radius: 5px; cursor: pointer;">Exercice Suivant</button>
+            </div>
+            <div class="divisor-observation-panel exercise-hidden" data-pedagogy-for-exercise="0">
+                <p>Observons : <span class="dividend-text-color">7</span> divisé par <span class="divisor-text-color">2</span> donne un reste de <span class="remainder-text-color">1</span>. Cela signifie que 2 ne peut pas 'partager' 7 en parts égales un nombre entier de fois.</p><p>Dans ce cas, on dit que <strong>2 n'est pas un diviseur de 7</strong>.</p>
+                <button class="interactive-panel-button" data-action="next-pedagogy-step">Compris, exemple suivant !</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exercise 1 -->
+    <div class="exercise-container exercise-hidden" data-exercise-index="1">
+        <p class="exercise-instruction">Entrez le quotient et le reste pour la division de 9 par 3, puis validez.</p>
+        <div class="exercise-content-wrapper">
+            <div class="equation-grid-representation">
+                <div class="grid-cell">
+                    <span class="number-value dividend-value">9</span>
+                </div>
+                <div class="grid-cell divisor-cell-style">
+                    <span class="number-value divisor-value">3</span>
+                </div>
+                <div class="grid-cell number-control remainder-control">
+                    <span class="number-value remainder-value" contenteditable="true">0</span>
+                    <div class="buttons">
+                        <button class="btn" data-action="inc">▲</button>
+                        <button class="btn" data-action="dec">▼</button>
+                    </div>
+                </div>
+                <div class="grid-cell number-control quotient-control quotient-input-cell-style">
+                    <span class="number-value quotient-value" contenteditable="true">1</span>
+                    <div class="buttons">
+                        <button class="btn" data-action="inc">▲</button>
+                        <button class="btn" data-action="dec">▼</button>
+                    </div>
+                </div>
+            </div>
+            <div class="validation-area">
+                <button class="validate-btn">Valider</button>
+                <p class="feedback-message"></p>
+                <div class="result-and-verification-wrapper" style="display: none;">
+                    <div class="result-visualization"></div>
+                    <div class="verification-text-area"></div>
+                </div>
+                <button class="next-exercise-btn" style="display: none; margin-top: 10px; padding: 10px 20px; font-size: 1em; color: white; background-color: #28a745; border: none; border-radius: 5px; cursor: pointer;">Exercice Suivant</button>
+            </div>
+            <div class="divisor-question-panel exercise-hidden" data-pedagogy-for-exercise="1">
+                <h3>Question :</h3>
+                <p>Pour la division de <span class="dividend-text-color">9</span> par <span class="divisor-text-color">3</span>, le reste était <span class="remainder-text-color">0</span>.</p>
+                <p>D'après toi, <strong>3 est-il un diviseur de 9 ?</strong></p>
+                <div class="pedagogy-button-group">
+                    <button class="interactive-panel-button pedagogy-choice-button" data-answer="oui">Oui</button>
+                    <button class="interactive-panel-button pedagogy-choice-button" data-answer="non">Non</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exercise 2 -->
+    <div class="exercise-container exercise-hidden" data-exercise-index="2">
+        <p class="exercise-instruction">Entrez le quotient et le reste pour la division de 16 par 4, puis validez.</p>
+        <div class="exercise-content-wrapper">
+            <div class="equation-grid-representation">
+                <div class="grid-cell">
+                    <span class="number-value dividend-value">16</span>
+                </div>
+                <div class="grid-cell divisor-cell-style">
+                    <span class="number-value divisor-value">4</span>
+                </div>
+                <div class="grid-cell number-control remainder-control">
+                    <span class="number-value remainder-value" contenteditable="true">0</span>
+                    <div class="buttons">
+                        <button class="btn" data-action="inc">▲</button>
+                        <button class="btn" data-action="dec">▼</button>
+                    </div>
+                </div>
+                <div class="grid-cell number-control quotient-control quotient-input-cell-style">
+                    <span class="number-value quotient-value" contenteditable="true">1</span>
+                    <div class="buttons">
+                        <button class="btn" data-action="inc">▲</button>
+                        <button class="btn" data-action="dec">▼</button>
+                    </div>
+                </div>
+            </div>
+            <div class="validation-area">
+                <button class="validate-btn">Valider</button>
+                <p class="feedback-message"></p>
+                <div class="result-and-verification-wrapper" style="display: none;">
+                    <div class="result-visualization"></div>
+                    <div class="verification-text-area"></div>
+                </div>
+                <button class="next-exercise-btn" style="display: none; margin-top: 10px; padding: 10px 20px; font-size: 1em; color: white; background-color: #28a745; border: none; border-radius: 5px; cursor: pointer;">Exercice Suivant</button>
+            </div>
+            <div class="divisor-question-panel exercise-hidden" data-pedagogy-for-exercise="2">
+                <h3>Question :</h3>
+                <p>Pour la division de <span class="dividend-text-color">16</span> par <span class="divisor-text-color">4</span>, le reste était <span class="remainder-text-color">0</span>.</p>
+                <p>D'après toi, <strong>4 est-il un diviseur de 16 ?</strong></p>
+                <div class="pedagogy-button-group">
+                    <button class="interactive-panel-button pedagogy-choice-button" data-answer="oui">Oui</button>
+                    <button class="interactive-panel-button pedagogy-choice-button" data-answer="non">Non</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exercise 3 -->
+    <div class="exercise-container exercise-hidden" data-exercise-index="3">
+        <p class="exercise-instruction">Entrez le quotient et le reste pour la division de 8 par 5, puis validez.</p>
+        <div class="exercise-content-wrapper">
+            <div class="equation-grid-representation">
+                <div class="grid-cell">
+                    <span class="number-value dividend-value">8</span>
+                </div>
+                <div class="grid-cell divisor-cell-style">
+                    <span class="number-value divisor-value">5</span>
+                </div>
+                <div class="grid-cell number-control remainder-control">
+                    <span class="number-value remainder-value" contenteditable="true">0</span>
+                    <div class="buttons">
+                        <button class="btn" data-action="inc">▲</button>
+                        <button class="btn" data-action="dec">▼</button>
+                    </div>
+                </div>
+                <div class="grid-cell number-control quotient-control quotient-input-cell-style">
+                    <span class="number-value quotient-value" contenteditable="true">1</span>
+                    <div class="buttons">
+                        <button class="btn" data-action="inc">▲</button>
+                        <button class="btn" data-action="dec">▼</button>
+                    </div>
+                </div>
+            </div>
+            <div class="validation-area">
+                <button class="validate-btn">Valider</button>
+                <p class="feedback-message"></p>
+                <div class="result-and-verification-wrapper" style="display: none;">
+                    <div class="result-visualization"></div>
+                    <div class="verification-text-area"></div>
+                </div>
+                <button class="next-exercise-btn" style="display: none; margin-top: 10px; padding: 10px 20px; font-size: 1em; color: white; background-color: #28a745; border: none; border-radius: 5px; cursor: pointer;">Exercice Suivant</button>
+            </div>
+            <div class="divisor-question-panel exercise-hidden" data-pedagogy-for-exercise="3">
+                <h3>Question :</h3>
+                <p>Pour la division de <span class="dividend-text-color">8</span> par <span class="divisor-text-color">5</span>, le reste était <span class="remainder-text-color">3</span>.</p>
+                <p>D'après toi, <strong>5 est-il un diviseur de 8 ?</strong></p>
+                <div class="pedagogy-button-group">
+                    <button class="interactive-panel-button pedagogy-choice-button" data-answer="oui">Oui</button>
+                    <button class="interactive-panel-button pedagogy-choice-button" data-answer="non">Non</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exercise 4 -->
+    <div class="exercise-container exercise-hidden" data-exercise-index="4">
+        <p class="exercise-instruction">Entrez le quotient et le reste pour la division de 12 par 6, puis validez.</p>
+        <div class="exercise-content-wrapper">
+            <div class="equation-grid-representation">
+                <div class="grid-cell">
+                    <span class="number-value dividend-value">12</span>
+                </div>
+                <div class="grid-cell divisor-cell-style">
+                    <span class="number-value divisor-value">6</span>
+                </div>
+                <div class="grid-cell number-control remainder-control">
+                    <span class="number-value remainder-value" contenteditable="true">0</span>
+                    <div class="buttons">
+                        <button class="btn" data-action="inc">▲</button>
+                        <button class="btn" data-action="dec">▼</button>
+                    </div>
+                </div>
+                <div class="grid-cell number-control quotient-control quotient-input-cell-style">
+                    <span class="number-value quotient-value" contenteditable="true">1</span>
+                    <div class="buttons">
+                        <button class="btn" data-action="inc">▲</button>
+                        <button class="btn" data-action="dec">▼</button>
+                    </div>
+                </div>
+            </div>
+            <div class="validation-area">
+                <button class="validate-btn">Valider</button>
+                <p class="feedback-message"></p>
+                <div class="result-and-verification-wrapper" style="display: none;">
+                    <div class="result-visualization"></div>
+                    <div class="verification-text-area"></div>
+                </div>
+                <button class="next-exercise-btn" style="display: none; margin-top: 10px; padding: 10px 20px; font-size: 1em; color: white; background-color: #28a745; border: none; border-radius: 5px; cursor: pointer;">Exercice Suivant</button>
+            </div>
+            <div class="divisor-question-panel exercise-hidden" data-pedagogy-for-exercise="4">
+                <h3>Question :</h3>
+                <p>Pour la division de <span class="dividend-text-color">12</span> par <span class="divisor-text-color">6</span>, le reste était <span class="remainder-text-color">0</span>.</p>
+                <p>D'après toi, <strong>6 est-il un diviseur de 12 ?</strong></p>
+                <div class="pedagogy-button-group">
+                    <button class="interactive-panel-button pedagogy-choice-button" data-answer="oui">Oui</button>
+                    <button class="interactive-panel-button pedagogy-choice-button" data-answer="non">Non</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exercise 5 -->
+    <div class="exercise-container exercise-hidden" data-exercise-index="5">
+        <p class="exercise-instruction">Entrez le quotient et le reste pour la division de 9 par 2, puis validez.</p>
+        <div class="exercise-content-wrapper">
+            <div class="equation-grid-representation">
+                <div class="grid-cell">
+                    <span class="number-value dividend-value">9</span>
+                </div>
+                <div class="grid-cell divisor-cell-style">
+                    <span class="number-value divisor-value">2</span>
+                </div>
+                <div class="grid-cell number-control remainder-control">
+                    <span class="number-value remainder-value" contenteditable="true">0</span>
+                    <div class="buttons">
+                        <button class="btn" data-action="inc">▲</button>
+                        <button class="btn" data-action="dec">▼</button>
+                    </div>
+                </div>
+                <div class="grid-cell number-control quotient-control quotient-input-cell-style">
+                    <span class="number-value quotient-value" contenteditable="true">1</span>
+                    <div class="buttons">
+                        <button class="btn" data-action="inc">▲</button>
+                        <button class="btn" data-action="dec">▼</button>
+                    </div>
+                </div>
+            </div>
+            <div class="validation-area">
+                <button class="validate-btn">Valider</button>
+                <p class="feedback-message"></p>
+                <div class="result-and-verification-wrapper" style="display: none;">
+                    <div class="result-visualization"></div>
+                    <div class="verification-text-area"></div>
+                </div>
+                <button class="next-exercise-btn" style="display: none; margin-top: 10px; padding: 10px 20px; font-size: 1em; color: white; background-color: #28a745; border: none; border-radius: 5px; cursor: pointer;">Exercice Suivant</button>
+            </div>
+            <div class="divisor-observation-panel exercise-hidden" data-pedagogy-for-exercise="5">
+                <p>Et pour <span class="dividend-text-color">9</span> divisé par <span class="divisor-text-color">2</span>, le reste est <span class="remainder-text-color">1</span>. Donc, <strong>2 n'est pas un diviseur de 9</strong>.</p>
+                <button class="interactive-panel-button" data-action="next-pedagogy-step">Vers la définition !</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="divisor-definition-panel" class="exercise-hidden">
+        <h2>Qu'est-ce qu'un Diviseur Alors ?</h2>
+        <p>Maintenant que vous avez vu comment le reste d'une division nous aide à identifier si un nombre en divise un autre parfaitement, voici la définition mathématique :</p>
+        <p><strong>Un nombre entier '<span class="divisor-text-color">a</span>' est un diviseur d'un nombre entier '<span class="dividend-text-color">b</span>' si la division euclidienne de '<span class="dividend-text-color">b</span>' par '<span class="divisor-text-color">a</span>' a un <span class="remainder-text-color">reste égal à zéro</span>.</strong></p>
+        <p>Autrement dit, si '<span class="dividend-text-color">b</span> ÷ <span class="divisor-text-color">a</span> = <span class="quotient-text-color">c</span> <span class="remainder-text-color">reste 0</span>', alors '<span class="divisor-text-color">a</span>' est un diviseur de '<span class="dividend-text-color">b</span>' (et '<span class="quotient-text-color">c</span>' est aussi un diviseur de '<span class="dividend-text-color">b</span>'!).</p>
+    </div>
+
+    <button id="restart-lesson-btn" class="validate-btn exercise-hidden" style="margin: 20px auto; background-color: #17a2b8; display: none;">Recommencer les exercices depuis le début</button>
+    <script>
+document.addEventListener('DOMContentLoaded', () => {
+    const exercisesData = [
+        { dividend: 7, divisor: 2, quotient: 3, remainder: 1 }, // index 0
+        { dividend: 9, divisor: 3, quotient: 3, remainder: 0 }, // index 1
+        { dividend: 16, divisor: 4, quotient: 4, remainder: 0 },// index 2
+        { dividend: 8, divisor: 5, quotient: 1, remainder: 3 }, // index 3
+        { dividend: 12, divisor: 6, quotient: 2, remainder: 0 },// index 4
+        { dividend: 9, divisor: 2, quotient: 4, remainder: 1 }  // index 5
+    ];
+
+    const definitionPanel = document.getElementById('divisor-definition-panel');
+    const restartLessonBtn = document.getElementById('restart-lesson-btn');
+    const allExerciseContainers = document.querySelectorAll('.exercise-container');
+    
+    const pedagogyPanels = [
+        document.querySelector('.exercise-container[data-exercise-index="0"] .divisor-observation-panel[data-pedagogy-for-exercise="0"]'),
+        document.querySelector('.exercise-container[data-exercise-index="1"] .divisor-question-panel[data-pedagogy-for-exercise="1"]'),
+        document.querySelector('.exercise-container[data-exercise-index="2"] .divisor-question-panel[data-pedagogy-for-exercise="2"]'),
+        document.querySelector('.exercise-container[data-exercise-index="3"] .divisor-question-panel[data-pedagogy-for-exercise="3"]'),
+        document.querySelector('.exercise-container[data-exercise-index="4"] .divisor-question-panel[data-pedagogy-for-exercise="4"]'),
+        document.querySelector('.exercise-container[data-exercise-index="5"] .divisor-observation-panel[data-pedagogy-for-exercise="5"]')
+    ];
+
+    let currentPedagogyStepIndex = -1; // -1 means pedagogy not started, 0-5 for each panel
+
+    function updateFieldValue(element, newValue) {
+        let val = parseInt(newValue, 10);
+        if (isNaN(val)) {
+            val = parseInt(element.textContent, 10);
+            if (isNaN(val)) val = 1; 
+        }
+        val = Math.max(0, val); 
+        element.textContent = val;
+    }
+
+    function generateVisualization(exerciseContainer, exerciseConfig) {
+        const vizEl = exerciseContainer.querySelector('.result-visualization');
+        if (!vizEl) return;
+        vizEl.innerHTML = ''; 
+
+        for (let i = 0; i < exerciseConfig.quotient; i++) {
+            const quotientBox = document.createElement('div');
+            quotientBox.className = 'viz-box viz-quotient-box';
+            for (let j = 0; j < exerciseConfig.divisor; j++) {
+                const square = document.createElement('div');
+                square.className = 'viz-square';
+                quotientBox.appendChild(square);
+            }
+            vizEl.appendChild(quotientBox);
+        }
+
+        if (exerciseConfig.remainder > 0) {
+            const remainderBox = document.createElement('div');
+            remainderBox.className = 'viz-box viz-remainder-box';
+            for (let k = 0; k < exerciseConfig.remainder; k++) {
+                const square = document.createElement('div');
+                square.className = 'viz-square';
+                remainderBox.appendChild(square);
+            }
+            vizEl.appendChild(remainderBox);
+        }
+        
+        if (exerciseConfig.quotient > 0 || exerciseConfig.remainder > 0) {
+             vizEl.style.display = 'flex';
+        } else {
+             vizEl.style.display = 'none';
+        }
+    }
+    
+    function resetExercise(container) {
+        const quotientValueEl = container.querySelector('.quotient-value');
+        const remainderValueEl = container.querySelector('.remainder-value');
+        const validateBtn = container.querySelector('.validate-btn');
+        const feedbackMessageEl = container.querySelector('.feedback-message');
+        const nextExerciseBtn = container.querySelector('.next-exercise-btn');
+        const quotientControl = container.querySelector('.quotient-control');
+        const remainderControl = container.querySelector('.remainder-control');
+        const resultAndVerificationWrapper = container.querySelector('.result-and-verification-wrapper');
+        
+        const pedagogyPanel = container.querySelector('.divisor-observation-panel, .divisor-question-panel');
+        if (pedagogyPanel) {
+            pedagogyPanel.classList.add('exercise-hidden');
+            const buttonGroup = pedagogyPanel.querySelector('.pedagogy-button-group');
+            if (buttonGroup) {
+                buttonGroup.style.display = 'flex';
+                pedagogyPanel.querySelectorAll('.pedagogy-choice-button').forEach(btn => {
+                    btn.classList.remove('pedagogy-button-error');
+                    btn.classList.remove('pedagogy-button-correct'); // Remove correct class
+                    btn.style.display = 'inline-block'; // Ensure both are visible
+                });
+            } else { // For observation panels with a single button
+                const panelButton = pedagogyPanel.querySelector('.interactive-panel-button');
+                if (panelButton) panelButton.style.display = 'inline-block';
+            }
+        }
+        // Ensure the exercise-content-wrapper is reset to default alignment
+        const contentWrapper = container.querySelector('.exercise-content-wrapper');
+        if (contentWrapper) contentWrapper.classList.remove('align-start');
+
+
+        if(quotientValueEl) {
+            quotientValueEl.textContent = '1'; 
+            quotientValueEl.style.color = 'var(--color-text)';
+            quotientValueEl.contentEditable = 'true';
+        }
+        if(quotientControl) {
+            const quotientButtons = quotientControl.querySelector('.buttons');
+            if (quotientButtons) quotientButtons.style.display = 'flex';
+            quotientControl.classList.add('number-control');
+            quotientControl.style.cursor = 'ns-resize';
+        }
+
+        if(remainderValueEl) {
+            remainderValueEl.textContent = '0'; 
+            remainderValueEl.style.color = 'var(--color-text)';
+            remainderValueEl.contentEditable = 'true';
+        }
+        if(remainderControl) {
+            const remainderButtons = remainderControl.querySelector('.buttons');
+            if (remainderButtons) remainderButtons.style.display = 'flex';
+            remainderControl.classList.add('number-control');
+            remainderControl.style.cursor = 'ns-resize';
+        }
+
+        if(validateBtn) {
+            validateBtn.style.display = 'block';
+            validateBtn.classList.remove('validation-error');
+        }
+        if(feedbackMessageEl) {
+            feedbackMessageEl.style.display = 'none';
+            feedbackMessageEl.innerHTML = '';
+        }
+        if(resultAndVerificationWrapper) resultAndVerificationWrapper.style.display = 'none';
+        if(nextExerciseBtn) nextExerciseBtn.style.display = 'none';
+    }
+
+    function showNextPedagogyStep() {
+        currentPedagogyStepIndex++;
+        
+        if (currentPedagogyStepIndex < pedagogyPanels.length) {
+            const panelToShow = pedagogyPanels[currentPedagogyStepIndex];
+            if (panelToShow) {
+                // Ensure its parent exercise-content-wrapper is aligned to start for better layout
+                const parentWrapper = panelToShow.closest('.exercise-content-wrapper');
+                if(parentWrapper) parentWrapper.classList.add('align-start');
+
+                panelToShow.classList.remove('exercise-hidden');
+                panelToShow.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+            }
+        } else { // All pedagogy steps done
+            if(definitionPanel) definitionPanel.classList.remove('exercise-hidden');
+            if(restartLessonBtn) restartLessonBtn.style.display = 'block'; 
+            if(definitionPanel) definitionPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    allExerciseContainers.forEach((container, i) => {
+        const exerciseIndex = parseInt(container.dataset.exerciseIndex, 10);
+        const exerciseConfig = exercisesData[exerciseIndex];
+
+        const instructionEl = container.querySelector('.exercise-instruction');
+        if (instructionEl && !container.querySelector('.exercise-equation-display')) { 
+            const equationDisplayEl = document.createElement('p');
+            equationDisplayEl.classList.add('exercise-equation-display');
+            equationDisplayEl.innerHTML =
+                `Exercice ${i + 1})<br><br><span class="dividend-text-color">${exerciseConfig.dividend}</span> ÷ <span class="divisor-text-color">${exerciseConfig.divisor}</span>`;
+            instructionEl.parentNode.insertBefore(equationDisplayEl, instructionEl);
+        }
+        
+        const quotientValueEl = container.querySelector('.quotient-value');
+        const remainderValueEl = container.querySelector('.remainder-value');
+        const validateBtn = container.querySelector('.validate-btn');
+        const feedbackMessageEl = container.querySelector('.feedback-message');
+        const nextExerciseBtn = container.querySelector('.next-exercise-btn');
+        const quotientControl = container.querySelector('.quotient-control');
+        const remainderControl = container.querySelector('.remainder-control');
+        const resultAndVerificationWrapper = container.querySelector('.result-and-verification-wrapper');
+        const verificationTextArea = resultAndVerificationWrapper ? resultAndVerificationWrapper.querySelector('.verification-text-area') : null;
+        
+        const currentInExercisePedagogyPanel = container.querySelector('.divisor-observation-panel, .divisor-question-panel');
+        if (currentInExercisePedagogyPanel) {
+            const choiceButtons = currentInExercisePedagogyPanel.querySelectorAll('.pedagogy-choice-button');
+            const singleButton = currentInExercisePedagogyPanel.querySelector('.interactive-panel-button:not(.pedagogy-choice-button)');
+
+            if (choiceButtons.length > 0) { // This is a question panel with Oui/Non
+                // Exercises 1, 2, 3, 4
+                choiceButtons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const clickedButton = e.target;
+                        const userAnswer = clickedButton.dataset.answer;
+                        
+                        // currentPedagogyStepIndex will be the index of the currently shown panel
+                        const currentExerciseConfigForPanel = exercisesData[currentPedagogyStepIndex];
+
+                        if (!currentExerciseConfigForPanel) return;
+
+                        const isDivisor = currentExerciseConfigForPanel.remainder === 0;
+                        const isCorrect = (isDivisor && userAnswer === "oui") || (!isDivisor && userAnswer === "non");
+
+                        // Clear error from all choice buttons in this group first
+                        choiceButtons.forEach(btn => btn.classList.remove('pedagogy-button-error'));
+
+                        if (isCorrect) {
+                            clickedButton.classList.add('pedagogy-button-correct');
+                            const buttonGroup = clickedButton.closest('.pedagogy-button-group');
+                            if (buttonGroup) {
+                                Array.from(buttonGroup.children).forEach(child => {
+                                    if (child !== clickedButton) {
+                                        child.style.display = 'none';
+                                    }
+                                });
+                            }
+                            
+                            setTimeout(() => {
+                                const parentWrapper = currentInExercisePedagogyPanel.closest('.exercise-content-wrapper');
+                                if(parentWrapper) parentWrapper.classList.remove('align-start');
+                                showNextPedagogyStep();
+                            }, 100); // Delay for 1 second
+                        } else {
+                            clickedButton.classList.add('pedagogy-button-error');
+                            setTimeout(() => {
+                                clickedButton.classList.remove('pedagogy-button-error');
+                            }, 400);
+                        }
+                    });
+                });
+            } else if (singleButton) { // This is an observation panel with a single button (Exercises 0, 5)
+                singleButton.addEventListener('click', () => {
+                    singleButton.style.display = 'none';
+                    const parentWrapper = currentInExercisePedagogyPanel.closest('.exercise-content-wrapper');
+                    if(parentWrapper) parentWrapper.classList.remove('align-start');
+                    showNextPedagogyStep();
+                });
+            }
+        }
+
+
+        [quotientValueEl, remainderValueEl].forEach(el => {
+            if (!el) return;
+            el.addEventListener('blur', (e) => {
+                if (e.target.contentEditable === 'true') {
+                    updateFieldValue(e.target, e.target.textContent);
+                }
+            });
+            el.addEventListener('keydown', (e) => {
+                if (e.target.contentEditable === 'true' && e.key === 'Enter') {
+                    e.preventDefault();
+                    e.target.blur();
+                }
+            });
+        });
+
+        container.querySelectorAll('.number-control').forEach(control => {
+            let isDragging = false, startY, startValue, currentEditableValueEl;
+
+            control.addEventListener('mousedown', (e) => {
+                if (e.target.matches('.btn')) return; 
+
+                currentEditableValueEl = control.querySelector('.number-value');
+                if (!currentEditableValueEl || currentEditableValueEl.contentEditable !== 'true') return;
+
+                isDragging = true;
+                startY = e.clientY;
+                startValue = parseInt(currentEditableValueEl.textContent, 10);
+                if (isNaN(startValue)) startValue = 1;
+                
+                document.body.style.cursor = 'ns-resize';
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging || !currentEditableValueEl || currentEditableValueEl.closest('.exercise-container') !== container) return;
+                 if (currentEditableValueEl.contentEditable !== 'true') {
+                    isDragging = false; document.body.style.cursor = 'unset'; return;
+                }
+                const deltaY = startY - e.clientY;
+                const newValue = startValue + Math.floor(deltaY / 5); 
+                updateFieldValue(currentEditableValueEl, newValue);
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging && currentEditableValueEl && currentEditableValueEl.closest('.exercise-container') === container) {
+                    isDragging = false;
+                    document.body.style.cursor = 'unset';
+                }
+            });
+
+            control.querySelectorAll('.btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const valueEl = control.querySelector('.number-value');
+                    if (!valueEl || valueEl.contentEditable !== 'true') return;
+
+                    let currentValue = parseInt(valueEl.textContent, 10);
+                    if (isNaN(currentValue)) currentValue = 1;
+                    currentValue += (button.dataset.action === 'inc' ? 1 : -1);
+                    updateFieldValue(valueEl, currentValue);
+                });
+            });
+        });
+
+
+        if(validateBtn) {
+            validateBtn.addEventListener('click', () => {
+                if (!quotientValueEl || !remainderValueEl || !exerciseConfig || !feedbackMessageEl || !resultAndVerificationWrapper || !verificationTextArea) return;
+
+                const userQuotient = parseInt(quotientValueEl.textContent, 10);
+                const userRemainder = parseInt(remainderValueEl.textContent, 10);
+
+                validateBtn.classList.remove('validation-error');
+                feedbackMessageEl.style.display = 'none';
+                resultAndVerificationWrapper.style.display = 'none';
+                verificationTextArea.innerHTML = '';
+                if(nextExerciseBtn) nextExerciseBtn.style.display = 'none'; 
+
+                if (userQuotient === exerciseConfig.quotient && userRemainder === exerciseConfig.remainder) {
+                    validateBtn.style.display = 'none';
+                    feedbackMessageEl.innerHTML = `<span class="correct-text">Correct</span>, le quotient est bien <span class="quotient-text-color">${exerciseConfig.quotient}</span> et le reste <span class="remainder-text-color">${exerciseConfig.remainder}</span>.`;
+                    feedbackMessageEl.style.display = 'block';
+
+                    generateVisualization(resultAndVerificationWrapper, exerciseConfig);
+
+                    const a = exerciseConfig.dividend;
+                    const b = exerciseConfig.divisor;
+                    const c = exerciseConfig.quotient;
+                    const d = exerciseConfig.remainder;
+
+                    verificationTextArea.innerHTML = `
+                        <p>Vérification : <span class="divisor-text-color">${b}</span> × <span class="quotient-text-color">${c}</span> + <span class="remainder-text-color">${d}</span> = <span class="dividend-text-color">${a}</span></p>
+                        <p><span class="dividend-text-color">${a}</span> divisé par <span class="divisor-text-color">${b}</span> donne <span class="quotient-text-color">${c}</span>, reste <span class="remainder-text-color">${d}</span></p>
+                    `;
+                    
+                    resultAndVerificationWrapper.style.display = 'flex';
+
+                    quotientValueEl.textContent = exerciseConfig.quotient;
+                    quotientValueEl.style.color = 'var(--color-quotient)';
+                    quotientValueEl.contentEditable = 'false';
+                    if(quotientControl) {
+                        const quotientButtons = quotientControl.querySelector('.buttons');
+                        if (quotientButtons) quotientButtons.style.display = 'none';
+                        quotientControl.classList.remove('number-control');
+                        quotientControl.style.cursor = 'default';
+                    }
+
+                    remainderValueEl.textContent = exerciseConfig.remainder;
+                    remainderValueEl.style.color = 'var(--color-remainder)';
+                    remainderValueEl.contentEditable = 'false';
+                    if(remainderControl) {
+                        const remainderButtons = remainderControl.querySelector('.buttons');
+                        if (remainderButtons) remainderButtons.style.display = 'none';
+                        remainderControl.classList.remove('number-control');
+                        remainderControl.style.cursor = 'default';
+                    }
+
+                    if (exerciseIndex < exercisesData.length - 1) {
+                        if(nextExerciseBtn) nextExerciseBtn.style.display = 'block';
+                    } else { // Last exercise (index 5) completed, start pedagogy sequence
+                        currentPedagogyStepIndex = -1; // Reset to -1 so showNextPedagogyStep increments to 0
+                        showNextPedagogyStep(); // This will show the pedagogy panel for exercise 0
+                    }
+                    container.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+                } else {
+                    validateBtn.classList.add('validation-error');
+                    setTimeout(() => {
+                        validateBtn.classList.remove('validation-error');
+                    }, 500);
+                }
+            });
+        }
+        
+        if(nextExerciseBtn) {
+            nextExerciseBtn.addEventListener('click', () => {
+                const currentExerciseIndex = parseInt(container.dataset.exerciseIndex, 10);
+                const nextExerciseIndex = currentExerciseIndex + 1;
+                
+                if (nextExerciseIndex < exercisesData.length) {
+                    const nextExerciseContainer = document.querySelector(`.exercise-container[data-exercise-index="${nextExerciseIndex}"]`);
+                    if (nextExerciseContainer) {
+                        nextExerciseContainer.classList.remove('exercise-hidden');
+                        const headerOffset = 80; 
+                        const elementPosition = nextExerciseContainer.getBoundingClientRect().top;
+                        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                        window.scrollTo({
+                            top: offsetPosition,
+                            behavior: "smooth"
+                        });
+                    }
+                }
+                nextExerciseBtn.style.display = 'none'; 
+            });
+        }
+    });
+    
+    if(restartLessonBtn) {
+        restartLessonBtn.addEventListener('click', () => {
+            allExerciseContainers.forEach((container, index) => {
+                resetExercise(container); 
+                if (index === 0) {
+                    container.classList.remove('exercise-hidden');
+                } else {
+                    container.classList.add('exercise-hidden');
+                }
+            });
+            // The resetExercise function called above now handles resetting pedagogy panels,
+            // so the following loop is no longer needed.
+            // pedagogyPanels.forEach(panel => {
+            //     if(panel) panel.classList.add('exercise-hidden');
+            //     const buttonGroup = panel.querySelector('.pedagogy-button-group');
+            //     if (buttonGroup) {
+            //         buttonGroup.style.display = 'flex';
+            //         panel.querySelectorAll('.pedagogy-choice-button').forEach(btn => {
+            //             btn.classList.remove('pedagogy-button-error');
+            //         });
+            //     } else {
+            //         const singleBtn = panel.querySelector('.interactive-panel-button:not(.pedagogy-choice-button)');
+            //         if(singleBtn) singleBtn.style.display = 'inline-block';
+            //     }
+            // });
+
+            if(definitionPanel) definitionPanel.classList.add('exercise-hidden');
+            restartLessonBtn.style.display = 'none';
+            currentPedagogyStepIndex = -1; 
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+});
+    </script>
+</body>
+</html>
